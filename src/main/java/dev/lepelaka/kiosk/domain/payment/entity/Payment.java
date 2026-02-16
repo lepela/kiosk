@@ -1,12 +1,11 @@
-package dev.lepelaka.kiosk.entity;
+package dev.lepelaka.kiosk.domain.payment.entity;
 
-import dev.lepelaka.kiosk.entity.enums.PaymentMethod;
-import dev.lepelaka.kiosk.entity.enums.PaymentStatus;
+import dev.lepelaka.kiosk.domain.order.entity.Order;
+import dev.lepelaka.kiosk.domain.payment.entity.enums.PaymentMethod;
+import dev.lepelaka.kiosk.domain.payment.entity.enums.PaymentStatus;
+import dev.lepelaka.kiosk.global.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
-
-import java.time.LocalDate;
 
 @Entity
 @Getter

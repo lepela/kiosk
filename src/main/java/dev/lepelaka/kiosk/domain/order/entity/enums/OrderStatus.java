@@ -1,4 +1,4 @@
-package dev.lepelaka.kiosk.entity.enums;
+package dev.lepelaka.kiosk.domain.order.entity.enums;
 
 import lombok.RequiredArgsConstructor;
 

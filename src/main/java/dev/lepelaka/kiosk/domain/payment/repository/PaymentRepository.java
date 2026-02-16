@@ -1,7 +1,7 @@
-package dev.lepelaka.kiosk.repository;
+package dev.lepelaka.kiosk.domain.payment.repository;
 
-import dev.lepelaka.kiosk.entity.Payment;
-import dev.lepelaka.kiosk.entity.enums.PaymentStatus;
+import dev.lepelaka.kiosk.domain.payment.entity.Payment;
+import dev.lepelaka.kiosk.domain.payment.entity.enums.PaymentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

@@ -1,15 +1,13 @@
-package dev.lepelaka.kiosk.entity;
+package dev.lepelaka.kiosk.domain.product.entity;
 
+import dev.lepelaka.kiosk.global.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@ToString(exclude = "orderItems")
+@ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class Product extends BaseEntity {
 
@@ -33,9 +31,6 @@ public class Product extends BaseEntity {
 
     @Column(nullable = false, length = 50)
     private String category;
-
-    @OneToMany(mappedBy = "product")
-    private List<OrderItem> orderItems = new ArrayList<>();
 
     @Builder
     public Product(String name, int price, int quantity,

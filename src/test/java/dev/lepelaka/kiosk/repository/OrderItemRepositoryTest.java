@@ -1,8 +1,15 @@
 package dev.lepelaka.kiosk.repository;
 
-import dev.lepelaka.kiosk.entity.*;
-import dev.lepelaka.kiosk.entity.enums.KioskStatus;
-import dev.lepelaka.kiosk.entity.enums.OrderStatus;
+import dev.lepelaka.kiosk.domain.order.entity.Order;
+import dev.lepelaka.kiosk.domain.order.entity.OrderItem;
+import dev.lepelaka.kiosk.domain.order.repository.OrderItemRepository;
+import dev.lepelaka.kiosk.domain.order.repository.OrderRepository;
+import dev.lepelaka.kiosk.domain.product.entity.Product;
+import dev.lepelaka.kiosk.domain.product.repository.ProductRepository;
+import dev.lepelaka.kiosk.domain.terminal.entity.Terminal;
+import dev.lepelaka.kiosk.domain.terminal.entity.enums.TerminalStatus;
+import dev.lepelaka.kiosk.domain.order.entity.enums.OrderStatus;
+import dev.lepelaka.kiosk.domain.terminal.repository.TerminalRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,7 +33,7 @@ class OrderItemRepositoryTest {
     private ProductRepository productRepository;
 
     @Autowired
-    private KioskRepository kioskRepository;
+    private TerminalRepository terminalRepository;
 
     private Order order;
     private Product product1;
@@ -35,18 +42,18 @@ class OrderItemRepositoryTest {
     @BeforeEach
     void setUp() {
         // Kiosk 생성
-        Kiosk kiosk = Kiosk.builder()
+        Terminal terminal = Terminal.builder()
                 .location("매장1-1호기")
-                .status(KioskStatus.ACTIVE)
+                .status(TerminalStatus.ACTIVE)
                 .build();
-        kioskRepository.save(kiosk);
+        terminalRepository.save(terminal);
 
         // Order 생성
         order = Order.builder()
                 .orderNumber("ORD-001")
                 .totalAmount(15000)
                 .status(OrderStatus.PENDING)
-                .kiosk(kiosk)
+                .terminal(terminal)
                 .build();
         orderRepository.save(order);
 
@@ -111,8 +118,8 @@ class OrderItemRepositoryTest {
         // then
         assertThat(items).hasSize(2);
         assertThat(items)
-                .extracting("product")
-                .containsOnly(product1);
+                .extracting("productId")
+                .containsOnly(product1.getId());
     }
 
     // 헬퍼 메서드
@@ -120,7 +127,8 @@ class OrderItemRepositoryTest {
                                       int quantity, int price) {
         return OrderItem.builder()
                 .order(order)
-                .product(product)
+                .productId(product.getId())
+                .productName(product.getName())
                 .quantity(quantity)
                 .price(price)
                 .build();

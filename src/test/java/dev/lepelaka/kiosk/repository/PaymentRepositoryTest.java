@@ -1,7 +1,15 @@
 package dev.lepelaka.kiosk.repository;
 
-import dev.lepelaka.kiosk.entity.*;
-import dev.lepelaka.kiosk.entity.enums.*;
+import dev.lepelaka.kiosk.domain.order.entity.Order;
+import dev.lepelaka.kiosk.domain.order.repository.OrderRepository;
+import dev.lepelaka.kiosk.domain.payment.entity.Payment;
+import dev.lepelaka.kiosk.domain.payment.repository.PaymentRepository;
+import dev.lepelaka.kiosk.domain.terminal.entity.Terminal;
+import dev.lepelaka.kiosk.domain.order.entity.enums.OrderStatus;
+import dev.lepelaka.kiosk.domain.payment.entity.enums.PaymentMethod;
+import dev.lepelaka.kiosk.domain.payment.entity.enums.PaymentStatus;
+import dev.lepelaka.kiosk.domain.terminal.repository.TerminalRepository;
+import dev.lepelaka.kiosk.domain.terminal.entity.enums.TerminalStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,33 +31,33 @@ class PaymentRepositoryTest {
     private OrderRepository orderRepository;
 
     @Autowired
-    private KioskRepository kioskRepository;
+    private TerminalRepository terminalRepository;
 
     private Order order1;
     private Order order2;
 
     @BeforeEach
     void setUp() {
-        // Kiosk 생성
-        Kiosk kiosk = Kiosk.builder()
+        // Terminal 생성
+        Terminal terminal = Terminal.builder()
                 .location("매장1-1호기")
-                .status(KioskStatus.ACTIVE)
+                .status(TerminalStatus.ACTIVE)
                 .build();
-        kioskRepository.save(kiosk);
+        terminalRepository.save(terminal);
 
         // Order 생성
         order1 = Order.builder()
                 .orderNumber("ORD-001")
                 .totalAmount(10000)
                 .status(OrderStatus.PENDING)
-                .kiosk(kiosk)
+                .terminal(terminal)
                 .build();
 
         order2 = Order.builder()
                 .orderNumber("ORD-002")
                 .totalAmount(15000)
                 .status(OrderStatus.PENDING)
-                .kiosk(kiosk)
+                .terminal(terminal)
                 .build();
 
         orderRepository.saveAll(List.of(order1, order2));

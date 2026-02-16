@@ -1,6 +1,6 @@
-package dev.lepelaka.kiosk.repository;
+package dev.lepelaka.kiosk.domain.product.repository;
 
-import dev.lepelaka.kiosk.entity.Product;
+import dev.lepelaka.kiosk.domain.product.entity.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

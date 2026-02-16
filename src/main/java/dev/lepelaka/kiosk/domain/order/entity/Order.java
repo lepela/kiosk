@@ -1,6 +1,8 @@
-package dev.lepelaka.kiosk.entity;
+package dev.lepelaka.kiosk.domain.order.entity;
 
-import dev.lepelaka.kiosk.entity.enums.OrderStatus;
+import dev.lepelaka.kiosk.domain.order.entity.enums.OrderStatus;
+import dev.lepelaka.kiosk.domain.terminal.entity.Terminal;
+import dev.lepelaka.kiosk.global.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,10 +14,10 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "orders", indexes = {
         @Index(name = "idx_order_number", columnList = "orderNumber"),
-        @Index(name = "idx_kiosk_status", columnList = "kiosk_id, status"),
+        @Index(name = "idx_terminal_status", columnList = "terminal_id, status"),
         @Index(name = "idx_created_at", columnList = "createdAt")
 })
-@ToString(exclude = {"kiosk", "orderItems"})
+@ToString(exclude = {"terminal", "orderItems"})
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class Order extends BaseEntity {
     @Id
@@ -33,8 +35,8 @@ public class Order extends BaseEntity {
     private OrderStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "kiosk_id", nullable = false)
-    private Kiosk kiosk;
+    @JoinColumn(name = "terminal_id", nullable = false)
+    private Terminal terminal;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
@@ -59,17 +61,17 @@ public class Order extends BaseEntity {
 
 
     @Builder
-    public Order(String orderNumber, int totalAmount, OrderStatus status, Kiosk kiosk) {
+    public Order(String orderNumber, int totalAmount, OrderStatus status, Terminal terminal) {
         this.orderNumber = orderNumber;
         this.totalAmount = totalAmount;
         this.status = status;
-        setKiosk(kiosk);
+        setTerminal(terminal);
     }
 
-    private void setKiosk(Kiosk kiosk) {
-        this.kiosk = kiosk;
-        if (kiosk != null) {
-            kiosk.getOrders().add(this);
+    private void setTerminal(Terminal terminal) {
+        this.terminal = terminal;
+        if (terminal != null) {
+            terminal.getOrders().add(this);
         }
     }
 

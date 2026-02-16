@@ -1,9 +1,11 @@
 package dev.lepelaka.kiosk.repository;
 
-import dev.lepelaka.kiosk.entity.Kiosk;
-import dev.lepelaka.kiosk.entity.Order;
-import dev.lepelaka.kiosk.entity.enums.KioskStatus;
-import dev.lepelaka.kiosk.entity.enums.OrderStatus;
+import dev.lepelaka.kiosk.domain.order.repository.OrderRepository;
+import dev.lepelaka.kiosk.domain.terminal.entity.Terminal;
+import dev.lepelaka.kiosk.domain.order.entity.Order;
+import dev.lepelaka.kiosk.domain.terminal.entity.enums.TerminalStatus;
+import dev.lepelaka.kiosk.domain.order.entity.enums.OrderStatus;
+import dev.lepelaka.kiosk.domain.terminal.repository.TerminalRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,17 +25,17 @@ class OrderRepositoryTest {
     private OrderRepository orderRepository;
 
     @Autowired
-    private KioskRepository kioskRepository;
+    private TerminalRepository terminalRepository;
 
-    private Kiosk kiosk;
+    private Terminal terminal;
 
     @BeforeEach
     void setUp() {
-        kiosk = Kiosk.builder()
+        terminal = Terminal.builder()
                 .location("매장1-1호기")
-                .status(KioskStatus.ACTIVE)
+                .status(TerminalStatus.ACTIVE)
                 .build();
-        kioskRepository.save(kiosk);
+        terminalRepository.save(terminal);
     }
 
     @Test
@@ -68,23 +70,23 @@ class OrderRepositoryTest {
     }
 
     @Test
-    @DisplayName("키오스크별 주문 조회")
-    void findByKioskId() {
+    @DisplayName("터미널별 주문 조회")
+    void findByTerminalId() {
         // given
         Order order1 = createOrder("ORD-001", 10000, OrderStatus.PENDING);
         Order order2 = createOrder("ORD-002", 15000, OrderStatus.COMPLETED);
         orderRepository.saveAll(List.of(order1, order2));
 
         // when
-        List<Order> orders = orderRepository.findByKioskId(kiosk.getId());
+        List<Order> orders = orderRepository.findByTerminalId(terminal.getId());
 
         // then
         assertThat(orders).hasSize(2);
     }
 
     @Test
-    @DisplayName("키오스크 + 상태별 조회")
-    void findByKioskIdAndStatus() {
+    @DisplayName("터미널별 + 상태별 조회")
+    void findByTerminalIdAndStatus() {
         // given
         Order order1 = createOrder("ORD-001", 10000, OrderStatus.PENDING);
         Order order2 = createOrder("ORD-002", 15000, OrderStatus.COMPLETED);
@@ -93,7 +95,7 @@ class OrderRepositoryTest {
 
         // when
         List<Order> pendingOrders = orderRepository
-                .findByKioskIdAndStatus(kiosk.getId(), OrderStatus.PENDING);
+                .findByTerminalIdAndStatus(terminal.getId(), OrderStatus.PENDING);
 
         // then
         assertThat(pendingOrders).hasSize(2);
@@ -163,7 +165,7 @@ class OrderRepositoryTest {
                 .orderNumber(orderNumber)
                 .totalAmount(totalAmount)
                 .status(status)
-                .kiosk(kiosk)
+                .terminal(terminal)
                 .build();
     }
 }

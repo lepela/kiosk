@@ -1,6 +1,8 @@
-package dev.lepelaka.kiosk.entity;
+package dev.lepelaka.kiosk.domain.terminal.entity;
 
-import dev.lepelaka.kiosk.entity.enums.KioskStatus;
+import dev.lepelaka.kiosk.domain.order.entity.Order;
+import dev.lepelaka.kiosk.domain.terminal.entity.enums.TerminalStatus;
+import dev.lepelaka.kiosk.global.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,7 +15,7 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @ToString(exclude = "orders")  // 순환참조 방지
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
-public class Kiosk extends BaseEntity {
+public class Terminal extends BaseEntity {
 
     @EqualsAndHashCode.Include
     @Id
@@ -25,15 +27,15 @@ public class Kiosk extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private KioskStatus status;
+    private TerminalStatus status;
 
     private LocalDateTime lastHeartbeat;
 
-    @OneToMany(mappedBy = "kiosk")
+    @OneToMany(mappedBy = "terminal")
     private List<Order> orders = new ArrayList<>();  // 초기화!
 
     @Builder
-    public Kiosk(String location, KioskStatus status) {
+    public Terminal(String location, TerminalStatus status) {
         this.location = location;
         this.status = status;
     }

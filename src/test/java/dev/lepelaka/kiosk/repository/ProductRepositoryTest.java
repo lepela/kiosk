@@ -1,7 +1,9 @@
 package dev.lepelaka.kiosk.repository;
 
-import dev.lepelaka.kiosk.entity.Product;
+import dev.lepelaka.kiosk.domain.product.entity.Product;
 import static org.assertj.core.api.Assertions.*;
+
+import dev.lepelaka.kiosk.domain.product.repository.ProductRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
