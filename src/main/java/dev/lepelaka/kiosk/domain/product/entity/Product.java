@@ -1,14 +1,17 @@
 package dev.lepelaka.kiosk.domain.product.entity;
 
+import dev.lepelaka.kiosk.domain.product.dto.ProductUpdateRequest;
 import dev.lepelaka.kiosk.global.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.DynamicUpdate;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
+@DynamicUpdate
 public class Product extends BaseEntity {
 
     @EqualsAndHashCode.Include
@@ -35,6 +38,15 @@ public class Product extends BaseEntity {
     @Builder
     public Product(String name, int price, int quantity,
                    String description, String imageUrl, String category) {
+        this.name = name;
+        this.price = price;
+        this.quantity = quantity;
+        this.description = description;
+        this.imageUrl = imageUrl;
+        this.category = category;
+    }
+
+    public void update(String name, int price, int quantity, String description, String imageUrl, String category ) {
         this.name = name;
         this.price = price;
         this.quantity = quantity;
