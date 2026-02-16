@@ -5,14 +5,15 @@ import dev.lepelaka.kiosk.domain.product.dto.ProductResponse;
 import dev.lepelaka.kiosk.domain.product.dto.ProductUpdateRequest;
 import dev.lepelaka.kiosk.domain.product.entity.Product;
 import dev.lepelaka.kiosk.domain.product.repository.ProductRepository;
+import dev.lepelaka.kiosk.global.common.dto.PageResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.NoSuchElementException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -143,14 +144,14 @@ class ProductServiceIntegrationTest {
         productRepository.save(product);
 
         // when
-        productService.delete(product.getId());
+        productService.remove(product.getId());
 
         // then
         Product deletedProduct = productRepository.findById(product.getId()).orElseThrow();
         assertThat(deletedProduct.isActive()).isFalse();
         
         // listOnActive() 조회 시 제외되는지 확인
-        List<ProductResponse> activeProducts = productService.listOnActive();
-        assertThat(activeProducts).isEmpty();
+        PageResponse<ProductResponse> activeProducts = productService.listOnActive(PageRequest.of(0, 10));
+        assertThat(activeProducts.content()).isEmpty();
     }
 }

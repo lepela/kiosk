@@ -8,6 +8,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -15,6 +18,8 @@ import java.util.List;
 public class ProductRepositoryTest {
     @Autowired
     private ProductRepository productRepository;
+
+    private Pageable pageable = PageRequest.of(0, 10);
 
     @Test
     public void testExist() {
@@ -53,7 +58,7 @@ public class ProductRepositoryTest {
         productRepository.saveAll(List.of(product1, product2, product3));
 
         // when
-        List<Product> mainProducts = productRepository.findByCategory("메인");
+        Page<Product> mainProducts = productRepository.findByCategory("메인", pageable);
 
         // then
         assertThat(mainProducts).hasSize(2);
@@ -72,7 +77,7 @@ public class ProductRepositoryTest {
         productRepository.saveAll(List.of(product1, product2));
 
         // when
-        List<Product> activeProducts = productRepository.findByActiveTrue();
+        Page<Product> activeProducts = productRepository.findByActiveTrue(pageable);
 
         // then
         assertThat(activeProducts).hasSize(2);
@@ -90,8 +95,8 @@ public class ProductRepositoryTest {
         productRepository.saveAll(List.of(product1, product2, product3));
 
         // when
-        List<Product> mainProducts = productRepository
-                .findByCategoryAndActiveTrue("메인");
+        Page<Product> mainProducts = productRepository
+                .findByCategoryAndActiveTrue("메인", pageable);
 
         // then
         assertThat(mainProducts).hasSize(1);

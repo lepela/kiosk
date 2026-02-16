@@ -3,7 +3,6 @@ plugins {
     id 'org.springframework.boot' version '3.5.10'
     id 'io.spring.dependency-management' version '1.1.7'
 }
-
 group = 'dev.lepelaka'
 version = '0.0.1-SNAPSHOT'
 description = 'kiosk'
@@ -47,6 +46,7 @@ dependencies {
     testAnnotationProcessor 'org.projectlombok:lombok'
 
     implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.0'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
 
 }
 

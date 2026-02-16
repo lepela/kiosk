@@ -831,32 +831,11 @@ class ComplexService {
 ```
 
 ---
+disableCachingNullValues() 사용이유
+>> 상품이 없는경우 까지를 캐싱했을때 상품이 추가되엇을때 ttl만료전까지 "없는상태"가 되어버림. 악의적 공격에 redis에 null stack 증가 우려.
 
-## **난이도:**
+GenericJackson2JsonRedisSerializer 보안 문제
+>> @Class를 통한 디시리얼라이즈 어택에 취약. 프로덕션 단계에서 Jackson2JsonRedisSerializer, ObjectMapper로 변경 예정.
 
-```
-Q1 (동시성): ★★★★★
-- 실무 필수
-- 데드락, Lock 전략
-
-Q2 (캐시): ★★★★☆
-- 2차 캐시 실무 적음
-- 이론적 이해 필요
-
-Q3 (N+1 함정): ★★★★★
-- 실무 자주 겪음
-- MultipleBagFetchException
-
-Q4 (전파 속성): ★★★★★
-- 매우 어려움
-- 실무 필수
-
-Q5 (영속성 라이프사이클): ★★★★★
-- JPA 핵심
-- persist vs merge
-
-보너스 (통합): ★★★★★
-- 모든 개념 통합
-- 시니어급
-
-
+캐시 워밍 
+>> 적용 예정

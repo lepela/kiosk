@@ -5,12 +5,17 @@ import dev.lepelaka.kiosk.domain.product.dto.ProductResponse;
 import dev.lepelaka.kiosk.domain.product.dto.ProductUpdateRequest;
 import dev.lepelaka.kiosk.domain.product.entity.Product;
 import dev.lepelaka.kiosk.domain.product.repository.ProductRepository;
+import dev.lepelaka.kiosk.global.common.dto.PageResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -47,6 +52,7 @@ class ProductServiceTest {
         Long savedId = productService.register(request);
 
         // then
+        assertThat(savedId).isEqualTo(product.getId());
         verify(productRepository).save(any(Product.class));
     }
 
@@ -114,7 +120,7 @@ class ProductServiceTest {
         given(productRepository.findById(productId)).willReturn(Optional.of(product));
 
         // when
-        productService.delete(productId);
+        productService.remove(productId);
 
         // then
         assertThat(product.isActive()).isFalse(); // BaseEntity의 active 필드 확인
@@ -145,19 +151,24 @@ class ProductServiceTest {
     }
 
     @Test
-    @DisplayName("상품 목록 조회")
+    @DisplayName("상품 목록 조회 (페이징)")
     void list() {
         // given
         Product p1 = Product.builder().name("짜장면").price(7000).quantity(100).description("맛있는 짜장면").imageUrl("url").category("메인").build();
         Product p2 = Product.builder().name("짬뽕").price(8000).quantity(100).description("맛있는 짬뽕").imageUrl("url").category("메인").build();
+        
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        Page<Product> productPage = new PageImpl<>(List.of(p1, p2), pageRequest, 2);
 
-        given(productRepository.findAll()).willReturn(List.of(p1, p2));
+        given(productRepository.findAll(any(Pageable.class))).willReturn(productPage);
 
         // when
-        List<ProductResponse> list = productService.list();
+        PageResponse<ProductResponse> response = productService.list(pageRequest);
 
         // then
-        assertThat(list).hasSize(2);
-        assertThat(list).extracting("name").containsExactly("짜장면", "짬뽕");
+        assertThat(response.content()).hasSize(2);
+        assertThat(response.content()).extracting("name").containsExactly("짜장면", "짬뽕");
+        assertThat(response.totalElements()).isEqualTo(2);
+        assertThat(response.totalPages()).isEqualTo(1);
     }
 }
