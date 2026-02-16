@@ -1,0 +1,40 @@
+services:
+  # MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: kiosk-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_DATABASE: kiosk_db
+      MYSQL_USER: kiosk_user
+      MYSQL_PASSWORD: kiosk1234
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  # Redis Stack (장바구니 + Vector Store 통합)
+  redis:
+    image: redis/redis-stack:latest
+    container_name: kiosk-redis
+    ports:
+      - "6379:6379"      # Redis
+      - "8001:8001"      # RedisInsight (GUI)
+    environment:
+      - REDIS_ARGS=--requirepass redis1234
+    volumes:
+      - redis-data:/data
+
+  # MySQL 관리 도구 (선택)
+  adminer:
+    image: adminer
+    container_name: kiosk-adminer
+    ports:
+      - "9090:8080"      # 9090으로 변경!
+    depends_on:
+      - mysql
+
+volumes:
+  mysql-data:
+  redis-data:
