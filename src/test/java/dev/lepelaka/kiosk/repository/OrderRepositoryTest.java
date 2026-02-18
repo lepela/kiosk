@@ -11,6 +11,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -78,7 +80,7 @@ class OrderRepositoryTest {
         orderRepository.saveAll(List.of(order1, order2));
 
         // when
-        List<Order> orders = orderRepository.findByTerminalId(terminal.getId());
+        Page<Order> orders = orderRepository.findByTerminalId(terminal.getId(), PageRequest.of(0, 10));
 
         // then
         assertThat(orders).hasSize(2);
@@ -94,8 +96,8 @@ class OrderRepositoryTest {
         orderRepository.saveAll(List.of(order1, order2, order3));
 
         // when
-        List<Order> pendingOrders = orderRepository
-                .findByTerminalIdAndStatus(terminal.getId(), OrderStatus.PENDING);
+        Page<Order> pendingOrders = orderRepository
+                .findByTerminalIdAndStatus(terminal.getId(), OrderStatus.PENDING, PageRequest.of(0, 10));
 
         // then
         assertThat(pendingOrders).hasSize(2);
@@ -114,7 +116,7 @@ class OrderRepositoryTest {
         orderRepository.saveAll(List.of(order1, order2, order3));
 
         // when
-        List<Order> pendingOrders = orderRepository.findByStatus(OrderStatus.PENDING);
+        Page<Order> pendingOrders = orderRepository.findByStatus(OrderStatus.PENDING, PageRequest.of(0,10));
 
         // then
         assertThat(pendingOrders).hasSize(2);
@@ -153,7 +155,7 @@ class OrderRepositoryTest {
         LocalDateTime end = LocalDateTime.now().plusDays(1);
 
         // when
-        List<Order> orders = orderRepository.findByCreatedAtBetween(start, end);
+        Page<Order> orders = orderRepository.findByCreatedAtBetween(start, end, PageRequest.of(0, 10));
 
         // then
         assertThat(orders).hasSize(2);

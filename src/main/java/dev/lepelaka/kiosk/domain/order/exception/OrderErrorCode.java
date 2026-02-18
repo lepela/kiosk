@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
 public enum OrderErrorCode implements ErrorCode {
     TERMINAL_NOT_FOUND("ORDER-001", "터이널을 찾을 수 없습니다", HttpStatus.NOT_FOUND),
     PRODUCT_NOT_FOUND("ORDER-002", "상품을 찾을 수 없습니다", HttpStatus.NOT_FOUND),
-    ORDER_NOT_FOUND("ORDER-003", "상품을 찾을 수 없습니다", HttpStatus.NOT_FOUND),
+    ORDER_NOT_FOUND("ORDER-003", "주문을 찾을 수 없습니다", HttpStatus.NOT_FOUND),
 
     INSUFFICIENT_STOCK("ORDER-101", "재고가 부족합니다", HttpStatus.BAD_REQUEST),
     INVALID_QUANTITY("ORDER-102", "유효하지 않은 수량입니다", HttpStatus.BAD_REQUEST),

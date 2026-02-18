@@ -1,6 +1,7 @@
 package dev.lepelaka.kiosk.domain.order.entity;
 
 import dev.lepelaka.kiosk.domain.order.entity.enums.OrderStatus;
+import dev.lepelaka.kiosk.domain.order.exception.InvalidOrderStatusException;
 import dev.lepelaka.kiosk.domain.terminal.entity.Terminal;
 import dev.lepelaka.kiosk.global.common.entity.BaseEntity;
 import jakarta.persistence.*;
@@ -32,7 +33,7 @@ public class Order extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private OrderStatus status;
+    private OrderStatus status = OrderStatus.PENDING;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "terminal_id", nullable = false)
@@ -41,22 +42,30 @@ public class Order extends BaseEntity {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
 
-    public void updateStatus(OrderStatus newStatus) {
-        this.status = newStatus;
+
+    public void validateStatusTransition(OrderStatus newStatus) {
+        if(!status.canTransitionTo(newStatus)) {
+            throw new InvalidOrderStatusException(status, newStatus);
+        }
+    }
+
+    public boolean isCancellable() {
+        return status == OrderStatus.PENDING;
+    }
+
+    public void confirm() {
+        validateStatusTransition(OrderStatus.CONFIRMED);
+        status = OrderStatus.CONFIRMED;
     }
 
     public void complete() {
-        if (this.status != OrderStatus.PROCESSING) {
-            throw new IllegalStateException("조리중인 주문만 완료 가능");
-        }
-        this.status = OrderStatus.COMPLETED;
+        validateStatusTransition(OrderStatus.COMPLETED);
+        status = OrderStatus.COMPLETED;
     }
 
     public void cancel() {
-        if (this.status == OrderStatus.COMPLETED) {
-            throw new IllegalStateException("완료된 주문은 취소 불가");
-        }
-        this.status = OrderStatus.CANCELLED;
+        validateStatusTransition(OrderStatus.CANCELED);
+        status = OrderStatus.CANCELED;
     }
 
 
@@ -82,6 +91,8 @@ public class Order extends BaseEntity {
     public void calculateTotalAmount() {
         totalAmount = orderItems.stream().mapToInt(OrderItem::getTotalPrice).sum();
     }
+
+
 
 }
 

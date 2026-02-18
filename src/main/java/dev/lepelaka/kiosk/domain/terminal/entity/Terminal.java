@@ -39,4 +39,8 @@ public class Terminal extends BaseEntity {
         this.location = location;
         this.status = status;
     }
+    @Builder
+    public Terminal(String location) {
+        this(location, TerminalStatus.ACTIVE);
+    }
 }

@@ -6,10 +6,8 @@ import dev.lepelaka.kiosk.domain.order.dto.OrderItemRequest;
 import dev.lepelaka.kiosk.domain.order.dto.OrderResponse;
 import dev.lepelaka.kiosk.domain.order.entity.Order;
 import dev.lepelaka.kiosk.domain.order.entity.OrderItem;
-import dev.lepelaka.kiosk.domain.order.exception.InsufficientStockException;
-import dev.lepelaka.kiosk.domain.order.exception.OrderErrorCode;
-import dev.lepelaka.kiosk.domain.order.exception.OrderException;
-import dev.lepelaka.kiosk.domain.order.exception.TerminalNotFoundException;
+import dev.lepelaka.kiosk.domain.order.entity.enums.OrderStatus;
+import dev.lepelaka.kiosk.domain.order.exception.*;
 import dev.lepelaka.kiosk.domain.order.repository.OrderItemRepository;
 import dev.lepelaka.kiosk.domain.order.repository.OrderRepository;
 import dev.lepelaka.kiosk.domain.product.entity.Product;
@@ -18,10 +16,13 @@ import dev.lepelaka.kiosk.domain.product.exception.ProductNotFoundException;
 import dev.lepelaka.kiosk.domain.product.repository.ProductRepository;
 import dev.lepelaka.kiosk.domain.terminal.entity.Terminal;
 import dev.lepelaka.kiosk.domain.terminal.repository.TerminalRepository;
+import dev.lepelaka.kiosk.global.common.dto.PageResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +57,7 @@ public class OrderService {
         List<Product> products = productRepository.findAllByIdWithPessimisticLock(productIds);
 
         // 4. 상품확인 프로세스
-        if(products.size() != itemRequests.size()) {
+        if(products.size() != productIds.size()) {
             Set<Long> foundIds = products.stream().map(Product::getId).collect(Collectors.toSet());
             Set<Long> notFoundIds = new HashSet<>(productIds);
             notFoundIds.removeAll(foundIds);
@@ -81,6 +82,7 @@ public class OrderService {
         Order order = Order.builder()
                 .terminal(terminal)
                 .orderNumber(orderNumberGenerator.generate())
+                .status(OrderStatus.PENDING)
                 .build();
 
 
@@ -99,6 +101,7 @@ public class OrderService {
                     .productId(product.getId())
                     .price(price)
                     .productName(productName)
+                    .order(order)
                     .build());
         }
         // 11. 총액 계산
@@ -110,7 +113,68 @@ public class OrderService {
         return order.getId();
     }
 
+
+    // 조회
     public OrderResponse getOrder(Long orderId) {
-        return OrderResponse.from(orderRepository.findById(orderId).orElseThrow(() -> new OrderException(OrderErrorCode.ORDER_CREATION_FAILED)));
+        return OrderResponse.from(orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId)));
     }
+
+    public OrderResponse getOrder(String orderNumber) {
+        return OrderResponse.from(orderRepository.findByOrderNumber(orderNumber).orElseThrow(()->new OrderNotFoundException(orderNumber)));
+    }
+
+    // 상태 변경
+    @Transactional
+    public void confirmOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
+        order.confirm();
+    }
+
+    @Transactional
+    public void completeOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
+        order.complete();
+    }
+
+    // 주문 취소 (결제 전만 가능)
+    @Transactional
+    public void cancelOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
+
+        if(!order.isCancellable()) {
+            throw new CannotCancelOrderException(orderId, order.getStatus());
+        }
+
+        // 재고 복구
+        for(OrderItem orderItem : order.getOrderItems()) {
+            Product product = productRepository.findById(orderItem.getProductId()).orElseThrow(() -> new ProductNotFoundException(orderItem.getProductId()));
+            product.increaseQuantity(orderItem.getQuantity());
+        }
+        order.cancel();
+    }
+
+    // 이하 관리자용 구현
+
+    // 전체 주문목록
+    public PageResponse<OrderResponse> getAllOrders(Pageable pageable) {
+        return PageResponse.from(orderRepository.findAll(pageable).map(OrderResponse::from));
+    }
+    // 상태별 주문목록
+    public PageResponse<OrderResponse> getOrdersByStatus(OrderStatus status, Pageable pageable) {
+        return PageResponse.from(orderRepository.findByStatus(status, pageable).map(OrderResponse::from));
+    }
+    // 터미널별 주문목록
+    public PageResponse<OrderResponse> getOrdersByTerminal(Long terminalId, Pageable pageable) {
+        return PageResponse.from(orderRepository.findByTerminalId(terminalId, pageable).map(OrderResponse::from));
+    }
+    // 기간별 주문목록
+    public PageResponse<OrderResponse> getOrdersByPeriod(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+        return PageResponse.from(orderRepository.findByCreatedAtBetween(startDate, endDate, pageable).map(OrderResponse::from));
+    }
+    // 통계 >> DTO 정의 후 구현예정
+    // 일일매출
+    // 기간매출
+
+
+
 }
