@@ -4,6 +4,8 @@ import dev.lepelaka.kiosk.domain.product.dto.ProductCreateRequest;
 import dev.lepelaka.kiosk.domain.product.dto.ProductResponse;
 import dev.lepelaka.kiosk.domain.product.dto.ProductUpdateRequest;
 import dev.lepelaka.kiosk.domain.product.entity.Product;
+import dev.lepelaka.kiosk.domain.product.exception.DuplicateProductException;
+import dev.lepelaka.kiosk.domain.product.exception.ProductNotFoundException;
 import dev.lepelaka.kiosk.domain.product.repository.ProductRepository;
 import dev.lepelaka.kiosk.global.common.dto.PageResponse;
 import lombok.RequiredArgsConstructor;
@@ -24,25 +26,28 @@ public class ProductService {
     @Transactional
     @CacheEvict(value = "products", allEntries = true)
     public Long register(ProductCreateRequest request) {
+        if(repository.existsByName(request.name())) {
+            throw new DuplicateProductException(request.name());
+        }
         return repository.save(request.toEntity()).getId();
     }
 
     @Transactional
     @CacheEvict(value = "products", allEntries = true)
     public void modify(Long id, ProductUpdateRequest request) {
-        Product product = repository.findById(id).orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다"));
+        Product product = repository.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
         product.update(request.name(), request.price(), request.quantity(), request.description(), request.imageUrl(), request.category());
     }
 
     @Transactional
     @CacheEvict(value = "products", allEntries = true)
     public void remove(Long id) {
-        repository.findById(id).orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다")).deactivate();
+        repository.findById(id).orElseThrow(() -> new ProductNotFoundException(id)).deactivate();
     }
 
     @Cacheable(value = "products", key = "#id")
     public ProductResponse detail(Long id) {
-        return repository.findById(id).map(ProductResponse::fromEntity).orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다"));
+        return repository.findById(id).map(ProductResponse::fromEntity).orElseThrow(() -> new ProductNotFoundException(id));
     }
 
     public PageResponse<ProductResponse> list(Pageable pageable) {

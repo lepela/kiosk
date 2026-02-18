@@ -32,7 +32,7 @@ public class Terminal extends BaseEntity {
     private LocalDateTime lastHeartbeat;
 
     @OneToMany(mappedBy = "terminal")
-    private List<Order> orders = new ArrayList<>();  // 초기화!
+    private List<Order> orders = new ArrayList<>();
 
     @Builder
     public Terminal(String location, TerminalStatus status) {

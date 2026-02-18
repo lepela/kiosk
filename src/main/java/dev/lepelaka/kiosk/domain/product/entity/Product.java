@@ -54,4 +54,8 @@ public class Product extends BaseEntity {
         this.imageUrl = imageUrl;
         this.category = category;
     }
+
+    public void decreaseQuantity(int quantity) {
+        this.quantity -= quantity;
+    }
 }
