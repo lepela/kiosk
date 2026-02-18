@@ -1,6 +1,5 @@
 package dev.lepelaka.kiosk.domain.product.entity;
 
-import dev.lepelaka.kiosk.domain.product.dto.ProductUpdateRequest;
 import dev.lepelaka.kiosk.global.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;

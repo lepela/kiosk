@@ -1,7 +1,6 @@
 package dev.lepelaka.kiosk.domain.product.exception;
 
 import dev.lepelaka.kiosk.global.exception.BusinessException;
-import org.springframework.http.HttpStatus;
 
 public class ProdcutException extends BusinessException {
     protected ProdcutException(ProductErrorCode errorCode) {

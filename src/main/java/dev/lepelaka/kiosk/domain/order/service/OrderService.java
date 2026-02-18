@@ -16,13 +16,9 @@ import dev.lepelaka.kiosk.domain.product.entity.Product;
 import dev.lepelaka.kiosk.domain.product.exception.InactiveProductException;
 import dev.lepelaka.kiosk.domain.product.exception.ProductNotFoundException;
 import dev.lepelaka.kiosk.domain.product.repository.ProductRepository;
-import dev.lepelaka.kiosk.domain.product.service.ProductService;
 import dev.lepelaka.kiosk.domain.terminal.entity.Terminal;
 import dev.lepelaka.kiosk.domain.terminal.repository.TerminalRepository;
-import dev.lepelaka.kiosk.global.exception.ErrorCode;
-import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,11 +32,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class OrderService {
-    private OrderRepository orderRepository;
-    private OrderItemRepository orderItemRepository;
-    private TerminalRepository terminalRepository;
-    private ProductRepository productRepository;
-    private OrderNumberGenerator orderNumberGenerator;
+    private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final TerminalRepository terminalRepository;
+    private final ProductRepository productRepository;
+    private final OrderNumberGenerator orderNumberGenerator;
 
     @Transactional
     public Long createOrder(OrderCreateRequest request) {

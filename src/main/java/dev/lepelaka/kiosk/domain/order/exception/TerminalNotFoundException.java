@@ -1,7 +1,5 @@
 package dev.lepelaka.kiosk.domain.order.exception;
 
-import dev.lepelaka.kiosk.global.exception.ErrorCode;
-
 public class TerminalNotFoundException extends OrderException {
 
     private final Long terminalId;
