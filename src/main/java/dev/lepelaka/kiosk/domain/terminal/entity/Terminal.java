@@ -23,11 +23,11 @@ public class Terminal extends BaseEntity {
     private Long id;
 
     @Column(nullable = false)
-    private String location;
+    private String name;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private TerminalStatus status;
+    private TerminalStatus status = TerminalStatus.ACTIVE;
 
     private LocalDateTime lastHeartbeat;
 
@@ -35,12 +35,9 @@ public class Terminal extends BaseEntity {
     private List<Order> orders = new ArrayList<>();
 
     @Builder
-    public Terminal(String location, TerminalStatus status) {
-        this.location = location;
+    public Terminal(String name, TerminalStatus status) {
+        this.name = name;
         this.status = status;
     }
-    @Builder
-    public Terminal(String location) {
-        this(location, TerminalStatus.ACTIVE);
-    }
+
 }

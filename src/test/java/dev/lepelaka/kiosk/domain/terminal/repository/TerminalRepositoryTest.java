@@ -1,8 +1,7 @@
-package dev.lepelaka.kiosk.repository;
+package dev.lepelaka.kiosk.domain.terminal.repository;
 
 import dev.lepelaka.kiosk.domain.terminal.entity.Terminal;
 import dev.lepelaka.kiosk.domain.terminal.entity.enums.TerminalStatus;
-import dev.lepelaka.kiosk.domain.terminal.repository.TerminalRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +23,7 @@ class TerminalRepositoryTest {
     void save_and_find() {
         // given
         Terminal terminal = Terminal.builder()
-                .location("매장1-1호기")
+                .name("매장1-1호기")
                 .status(TerminalStatus.ACTIVE)
                 .build();
 
@@ -33,7 +32,7 @@ class TerminalRepositoryTest {
 
         // then
         assertThat(saved.getId()).isNotNull();
-        assertThat(saved.getLocation()).isEqualTo("매장1-1호기");
+        assertThat(saved.getName()).isEqualTo("매장1-1호기");
         assertThat(saved.getStatus()).isEqualTo(TerminalStatus.ACTIVE);
     }
 
@@ -65,11 +64,11 @@ class TerminalRepositoryTest {
         terminalRepository.save(terminal);
 
         // when
-        Optional<Terminal> found = terminalRepository.findByLocation("매장1-1호기");
+        Optional<Terminal> found = terminalRepository.findByName("매장1-1호기");
 
         // then
         assertThat(found).isPresent();
-        assertThat(found.get().getLocation()).isEqualTo("매장1-1호기");
+        assertThat(found.get().getName()).isEqualTo("매장1-1호기");
     }
 
     @Test
@@ -90,9 +89,9 @@ class TerminalRepositoryTest {
     }
 
     // 헬퍼 메서드
-    private Terminal createTerminal(String location, TerminalStatus status) {
+    private Terminal createTerminal(String name, TerminalStatus status) {
         return Terminal.builder()
-                .location(location)
+                .name(name)
                 .status(status)
                 .build();
     }

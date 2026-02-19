@@ -1,4 +1,4 @@
-package dev.lepelaka.kiosk.repository;
+package dev.lepelaka.kiosk.domain.payment.repository;
 
 import dev.lepelaka.kiosk.domain.order.entity.Order;
 import dev.lepelaka.kiosk.domain.order.repository.OrderRepository;
@@ -40,7 +40,7 @@ class PaymentRepositoryTest {
     void setUp() {
         // Terminal 생성
         Terminal terminal = Terminal.builder()
-                .location("매장1-1호기")
+                .name("매장1-1호기")
                 .status(TerminalStatus.ACTIVE)
                 .build();
         terminalRepository.save(terminal);

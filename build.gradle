@@ -48,6 +48,11 @@ dependencies {
     implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.0'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
 
+    // mysql 동시성 테스트용 테스트 컨테이너
+    testImplementation "org.springframework.boot:spring-boot-testcontainers"
+    testImplementation "org.testcontainers:junit-jupiter"
+    testImplementation "org.testcontainers:mysql"
+
 }
 
 tasks.named('test') {

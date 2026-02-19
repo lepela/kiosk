@@ -138,7 +138,7 @@ public class OrderService {
         // 재고 복구
         for(OrderItem orderItem : order.getOrderItems()) {
             Product product = productRepository.findById(orderItem.getProductId()).orElseThrow(() -> new ProductNotFoundException(orderItem.getProductId()));
-            product.increaseQuantity(orderItem.getQuantity());
+            product.restore(orderItem.getQuantity());
         }
         order.cancel();
     }

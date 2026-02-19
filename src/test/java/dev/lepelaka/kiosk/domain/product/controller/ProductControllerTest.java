@@ -2,17 +2,16 @@ package dev.lepelaka.kiosk.domain.product.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.lepelaka.kiosk.domain.category.dto.CategoryResponse;
-import dev.lepelaka.kiosk.domain.category.entity.Category;
 import dev.lepelaka.kiosk.domain.product.dto.ProductCreateRequest;
 import dev.lepelaka.kiosk.domain.product.dto.ProductResponse;
 import dev.lepelaka.kiosk.domain.product.dto.ProductUpdateRequest;
 import dev.lepelaka.kiosk.domain.product.service.ProductService;
 import dev.lepelaka.kiosk.global.common.dto.PageResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -28,6 +28,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@Slf4j
 @WebMvcTest(controllers = ProductController.class)
 class ProductControllerTest {
 
@@ -40,10 +41,8 @@ class ProductControllerTest {
     @MockitoBean
     private ProductService productService;
 
-    @MockitoBean
-    private CacheManager cacheManager;
-
-    private CategoryResponse categoryResponse = CategoryResponse.from(Category.builder().name("메인").build());
+    // 테스트용 더미 데이터 (Record 생성자 사용 가정)
+    private final CategoryResponse categoryResponse = new CategoryResponse(1L, "메인", "설명", 1, true, LocalDateTime.now(), LocalDateTime.now());
 
     @Test
     @DisplayName("신규 상품을 등록한다.")
@@ -56,13 +55,13 @@ class ProductControllerTest {
         given(productService.register(any(ProductCreateRequest.class))).willReturn(1L);
 
         // when & then
-        mockMvc.perform(post("/api/v1/products/create")
+        mockMvc.perform(post("/api/v1/products") // RESTful URL (create 제거)
                         .content(objectMapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andDo(print())
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "/api/v1/products/1"))
+                .andExpect(header().string("Location", "http://localhost/api/v1/products/1")) // ServletUriComponentsBuilder 기본 호스트
                 .andExpect(content().string("1"));
     }
 
@@ -74,7 +73,7 @@ class ProductControllerTest {
         ProductUpdateRequest request = new ProductUpdateRequest(
                 "쟁반짜장", 8000, 50, "더 맛있는 짜장", "new_url", 1L
         );
-
+        log.info("{}", request);
         // when & then
         mockMvc.perform(put("/api/v1/products/{id}", productId)
                         .content(objectMapper.writeValueAsString(request))
@@ -133,7 +132,7 @@ class ProductControllerTest {
         given(productService.listOnActive(any(Pageable.class))).willReturn(response);
 
         // when & then
-        mockMvc.perform(get("/api/v1/products/")
+        mockMvc.perform(get("/api/v1/products/list")
                         .param("page", "0")
                         .param("size", "10"))
                 .andDo(print())

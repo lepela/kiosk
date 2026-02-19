@@ -1,6 +1,7 @@
 package dev.lepelaka.kiosk.domain.order.repository;
 
 import dev.lepelaka.kiosk.domain.category.entity.Category;
+import dev.lepelaka.kiosk.domain.category.repository.CategoryRepository;
 import dev.lepelaka.kiosk.domain.order.entity.Order;
 import dev.lepelaka.kiosk.domain.order.entity.OrderItem;
 import dev.lepelaka.kiosk.domain.product.entity.Product;
@@ -34,15 +35,27 @@ class OrderItemRepositoryTest {
     @Autowired
     private TerminalRepository terminalRepository;
 
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+
     private Order order;
     private Product product1;
     private Product product2;
 
+
     @BeforeEach
     void setUp() {
+        Category category = Category.builder()
+                .displayOrder(1)
+                .name("메인")
+                .description("메인 메뉴")
+                .build();
+        categoryRepository.save(category);
+
         // Kiosk 생성
         Terminal terminal = Terminal.builder()
-                .location("매장1-1호기")
+                .name("매장1-1호기")
                 .status(TerminalStatus.ACTIVE)
                 .build();
         terminalRepository.save(terminal);
@@ -60,13 +73,13 @@ class OrderItemRepositoryTest {
         product1 = Product.builder()
                 .name("짜장면")
                 .price(7000)
-                .category(Category.builder().name("메인").build())
+                .category(category)
                 .build();
 
         product2 = Product.builder()
                 .name("짬뽕")
                 .price(8000)
-                .category(Category.builder().name("메인").build())
+                .category(category)
                 .build();
 
         productRepository.saveAll(List.of(product1, product2));

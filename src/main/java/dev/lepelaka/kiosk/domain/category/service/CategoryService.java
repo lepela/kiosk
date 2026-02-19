@@ -41,6 +41,12 @@ public class CategoryService {
 
     @Transactional
     @CacheEvict(value = "categories", allEntries = true)
+    public void activate(Long id) {
+        getCategory(id).activate();
+    }
+
+    @Transactional
+    @CacheEvict(value = "categories", allEntries = true)
     public void remove(Long id) {
         categoryRepository.delete(getCategory(id));
     }
@@ -49,6 +55,7 @@ public class CategoryService {
     public CategoryResponse get(Long id) {
         return CategoryResponse.from(getCategory(id));
     }
+
 
     @Cacheable(value = "categories", key = "':active:page:' + #pageable.pageNumber + ':size:' + #pageable.pageSize")
     public PageResponse<CategoryResponse> listActive(Pageable pageable) {
@@ -64,5 +71,6 @@ public class CategoryService {
     private Category getCategory(Long id) {
         return categoryRepository.findById(id).orElseThrow(() -> new CategoryNotFoundException(id));
     }
+
 
 }

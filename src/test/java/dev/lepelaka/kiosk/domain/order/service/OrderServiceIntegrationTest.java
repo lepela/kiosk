@@ -1,6 +1,7 @@
 package dev.lepelaka.kiosk.domain.order.service;
 
 import dev.lepelaka.kiosk.domain.category.entity.Category;
+import dev.lepelaka.kiosk.domain.category.repository.CategoryRepository;
 import dev.lepelaka.kiosk.domain.order.component.OrderNumberGenerator;
 import dev.lepelaka.kiosk.domain.order.dto.OrderCreateRequest;
 import dev.lepelaka.kiosk.domain.order.dto.OrderItemRequest;
@@ -11,7 +12,9 @@ import dev.lepelaka.kiosk.domain.order.repository.OrderRepository;
 import dev.lepelaka.kiosk.domain.product.entity.Product;
 import dev.lepelaka.kiosk.domain.product.repository.ProductRepository;
 import dev.lepelaka.kiosk.domain.terminal.entity.Terminal;
+import dev.lepelaka.kiosk.domain.terminal.entity.enums.TerminalStatus;
 import dev.lepelaka.kiosk.domain.terminal.repository.TerminalRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,12 +47,26 @@ class OrderServiceIntegrationTest {
     @MockitoBean
     private OrderNumberGenerator orderNumberGenerator;
 
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+    private Category category;
+    private Terminal terminal;
+
+    @BeforeEach
+    void setUp() {
+        orderRepository.deleteAll();
+        productRepository.deleteAll();
+        terminalRepository.deleteAll();
+        category = categoryRepository.save(Category.builder().name("메인").displayOrder(1).description("메인메뉴").build());
+        terminal = terminalRepository.save(Terminal.builder().name("강남점 키오스크 1번").status(TerminalStatus.ACTIVE).build());
+    }
+
     @DisplayName("주문 생성 시 재고가 차감되고 주문 내역이 저장된다.")
     @Test
     void createOrder() {
         // given
-        Terminal terminal = terminalRepository.save(new Terminal("강남점 키오스크 1번"));
-        Product product = productRepository.save(createProduct("아메리카노", 5000, 10, "메인"));
+        Product product = productRepository.save(createProduct("아메리카노", 5000, 10));
 
         OrderCreateRequest request = new OrderCreateRequest(
                 List.of(new OrderItemRequest(product.getId(), 2)),
@@ -82,8 +99,7 @@ class OrderServiceIntegrationTest {
     @Test
     void createOrderWithDuplicateItems() {
         // given
-        Terminal terminal = terminalRepository.save(new Terminal("강남점 키오스크 1번"));
-        Product product = productRepository.save(createProduct("아메리카노", 5000, 10, "메인"));
+        Product product = productRepository.save(createProduct("아메리카노", 5000, 10));
 
         // 같은 상품을 2개, 3개로 나누어 요청 (총 5개)
         OrderCreateRequest request = new OrderCreateRequest(
@@ -115,8 +131,7 @@ class OrderServiceIntegrationTest {
     @Test
     void createOrderWithInsufficientStock() {
         // given
-        Terminal terminal = terminalRepository.save(new Terminal("강남점 키오스크 1번"));
-        Product product = productRepository.save(createProduct("한정판 텀블러", 30000, 1, "메인")); // 재고 1개
+        Product product = productRepository.save(createProduct("한정판 텀블러", 30000, 1)); // 재고 1개
 
         OrderCreateRequest request = new OrderCreateRequest(
                 List.of(new OrderItemRequest(product.getId(), 2)), // 2개 요청
@@ -132,8 +147,7 @@ class OrderServiceIntegrationTest {
     @Test
     void cancelOrder() {
         // given
-        Terminal terminal = terminalRepository.save(new Terminal("강남점 키오스크 1번"));
-        Product product = productRepository.save(createProduct("아메리카노", 5000, 5, "이벤트"));
+        Product product = productRepository.save(createProduct("아메리카노", 5000, 5));
 
         // 주문 생성 (재고 5 -> 3)
         OrderCreateRequest request = new OrderCreateRequest(
@@ -154,7 +168,7 @@ class OrderServiceIntegrationTest {
         assertThat(restoredProduct.getQuantity()).isEqualTo(5); // 다시 5로 복구
     }
 
-    private Product createProduct(String name, int price, int quantity, String categoryName) {
-        return Product.builder().name(name).price(price).quantity(quantity).category(Category.builder().name(categoryName).build()).build();
+    private Product createProduct(String name, int price, int quantity) {
+        return Product.builder().name(name).price(price).quantity(quantity).category(category).build();
     }
 }

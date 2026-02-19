@@ -1,5 +1,7 @@
 package dev.lepelaka.kiosk.domain.order.service;
 
+import dev.lepelaka.kiosk.domain.category.entity.Category;
+import dev.lepelaka.kiosk.domain.category.repository.CategoryRepository;
 import dev.lepelaka.kiosk.domain.order.component.OrderNumberGenerator;
 import dev.lepelaka.kiosk.domain.order.dto.OrderCreateRequest;
 import dev.lepelaka.kiosk.domain.order.dto.OrderItemRequest;
@@ -19,6 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -48,6 +51,9 @@ class OrderServiceTest {
     @Mock
     private OrderNumberGenerator orderNumberGenerator;
 
+    @Mock
+    private CategoryRepository categoryRepository;
+
     @DisplayName("주문 생성 시 재고가 감소하고 주문이 저장된다.")
     @Test
     void createOrder() {
@@ -55,32 +61,32 @@ class OrderServiceTest {
         Long terminalId = 1L;
         Long productId = 100L;
         int requestQuantity = 2;
-        int initialStock = 10;
+        int initialStock = 3;
 
         OrderCreateRequest request = new OrderCreateRequest(
                                 List.of(new OrderItemRequest(productId, requestQuantity)), terminalId
         );
 
         Terminal terminal = mock(Terminal.class);
-        Product product = mock(Product.class);
+        
+        // Mock 대신 실제 객체 사용 (상태 검증을 위해)
+        Product product = Product.builder()
+                .name("아메리카노")
+                .price(5000)
+                .quantity(initialStock)
+                .build();
+        ReflectionTestUtils.setField(product, "id", productId);
 
         given(terminalRepository.findById(terminalId)).willReturn(Optional.of(terminal));
         given(productRepository.findAllByIdWithPessimisticLock(anyList())).willReturn(List.of(product));
         given(orderNumberGenerator.generate()).willReturn("20231010-0001");
 
-        // Product Mock 설정
-        given(product.getId()).willReturn(productId);
-        given(product.isActive()).willReturn(true);
-        given(product.getQuantity()).willReturn(initialStock);
-        given(product.getPrice()).willReturn(5000);
-        given(product.getName()).willReturn("아메리카노");
-
         // when
         orderService.createOrder(request);
 
         // then
-        // 1. 재고 감소 메서드가 호출되었는지 검증
-        verify(product, times(1)).decreaseQuantity(requestQuantity);
+        // 1. 실제 재고가 감소했는지 상태 검증 (Mock일 때는 불가능했던 검증)
+        assertThat(product.getQuantity()).isEqualTo(initialStock - requestQuantity);
         
         // 2. 주문 저장 메서드가 호출되었는지 검증
         verify(orderRepository, times(1)).save(any(Order.class));
@@ -129,14 +135,19 @@ class OrderServiceTest {
         );
 
         Terminal terminal = mock(Terminal.class);
-        Product product = mock(Product.class);
+        
+        // Mock 객체는 내부 로직이 실행되지 않으므로, 예외 검증을 위해 실제 객체 사용
+        Category category = mock(Category.class);
+        Product product = Product.builder()
+                .name("테스트상품")
+                .price(5000)
+                .quantity(currentStock) // 재고 3
+                .category(category)
+                .build();
+        ReflectionTestUtils.setField(product, "id", productId);
 
         given(terminalRepository.findById(terminalId)).willReturn(Optional.of(terminal));
         given(productRepository.findAllByIdWithPessimisticLock(anyList())).willReturn(List.of(product));
-
-        given(product.getId()).willReturn(productId);
-        given(product.isActive()).willReturn(true);
-        given(product.getQuantity()).willReturn(currentStock); // 재고 부족 설정
 
         // when & then
         assertThatThrownBy(() -> orderService.createOrder(request))
@@ -173,7 +184,7 @@ class OrderServiceTest {
 
         // then
         // 1. 재고 증가(복구) 호출 검증
-        verify(product, times(1)).increaseQuantity(quantity);
+        verify(product, times(1)).restore(quantity);
         
         // 2. 주문 취소 처리 호출 검증
         verify(order, times(1)).cancel();

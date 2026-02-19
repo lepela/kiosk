@@ -5,13 +5,16 @@ import dev.lepelaka.kiosk.domain.order.entity.Order;
 import dev.lepelaka.kiosk.domain.terminal.entity.enums.TerminalStatus;
 import dev.lepelaka.kiosk.domain.order.entity.enums.OrderStatus;
 import dev.lepelaka.kiosk.domain.terminal.repository.TerminalRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,7 +23,10 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.*;
 
 @DataJpaTest
+@Import(OrderRepositoryTest.TestJpaConfig.class)
 class OrderRepositoryTest {
+    @EnableJpaAuditing
+    static class TestJpaConfig {}
 
     @Autowired
     private OrderRepository orderRepository;
@@ -33,7 +39,7 @@ class OrderRepositoryTest {
     @BeforeEach
     void setUp() {
         terminal = Terminal.builder()
-                .location("매장1-1호기")
+                .name("매장1-1호기")
                 .status(TerminalStatus.ACTIVE)
                 .build();
         terminalRepository.save(terminal);

@@ -13,7 +13,7 @@ import org.hibernate.annotations.DynamicUpdate;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class Category extends BaseEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
     @Column(nullable = false, length = 50, unique = true)

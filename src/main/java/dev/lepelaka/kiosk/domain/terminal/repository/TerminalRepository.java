@@ -12,5 +12,5 @@ public interface TerminalRepository extends JpaRepository<Terminal, Long> {
 
     List<Terminal> findByStatusAndActiveTrue(TerminalStatus status);
 
-    Optional<Terminal> findByLocation(String location);
+    Optional<Terminal> findByName(String name);
 }

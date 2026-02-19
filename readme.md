@@ -38,3 +38,18 @@ docker-compose up -d
 
 ## 추후 예정 
 - 결제, 터미널, 관리자 구현
+
+## 기본 로컬 서버
+- API : http://localhost:8080
+- DB Manage (Adminer) : http://localhost:9090
+- Redis Stack : http://localhost:8081
+
+## 트러블슈팅 이력
+```
+# 2026-02-19
+현상: Redis에서 Record 타입 역직렬화 시 데이터 불일치.
+원인: Record의 Final 특성과 기본 생성자 부재로 인한 LinkedHashMap 매핑.
+해결: TypeResolverBuilder 커스텀 설정을 통한 클래스 타입 보존.
+```
+       
+    

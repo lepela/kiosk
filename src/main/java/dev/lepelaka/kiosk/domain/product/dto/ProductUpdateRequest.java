@@ -3,6 +3,7 @@ package dev.lepelaka.kiosk.domain.product.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 
@@ -27,6 +28,6 @@ public record ProductUpdateRequest(
         String imageUrl,
 
         @Schema(description = "카테고리", example = "1")
-        @NotBlank(message = "카테고리는 필수입니다.")
+        @NotNull(message = "카테고리는 필수입니다.")
         Long categoryId
 ) {}

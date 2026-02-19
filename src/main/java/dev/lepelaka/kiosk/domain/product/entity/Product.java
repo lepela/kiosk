@@ -61,11 +61,12 @@ public class Product extends BaseEntity {
         this.imageUrl = imageUrl;
         this.category = category;
     }
-    public void increaseQuantity(int quantity) {
-        this.quantity += quantity;
+    void increaseQuantity(int requestedQuantity) {
+        if(requestedQuantity <= 0) throw new InvalidQuantityException(id, requestedQuantity);
+        this.quantity += requestedQuantity;
     }
 
-    public void decreaseQuantity(int requestedQuantity) {
+    void decreaseQuantity(int requestedQuantity) {
         if(requestedQuantity <= 0) throw new InvalidQuantityException(id, requestedQuantity);
         if (this.quantity < requestedQuantity) {
             throw new InsufficientStockException(id, requestedQuantity, this.quantity);
@@ -87,6 +88,11 @@ public class Product extends BaseEntity {
     public void order(int requestedQuantity) {
         validateActive();
         decreaseQuantity(requestedQuantity);
+    }
+
+    public void restore(int requestedQuantity) {
+        validateActive();
+        increaseQuantity(requestedQuantity);
     }
 
 }
