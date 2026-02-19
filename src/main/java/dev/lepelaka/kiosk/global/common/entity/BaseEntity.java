@@ -20,6 +20,8 @@ public abstract class BaseEntity {
     @LastModifiedDate
     @Column(updatable = false)
     private LocalDateTime updatedAt;
+
+    @Column(nullable = false)
     private boolean active = true;
 
     public void deactivate() {

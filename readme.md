@@ -4,7 +4,7 @@
 키오스크 관리 시스템 백엔드 API
 
 ## 기술 스택
-- Java 17
+- Java 21
 - Spring Boot 3.5.10
 - Spring Data JPA
 - Redis (Cache)

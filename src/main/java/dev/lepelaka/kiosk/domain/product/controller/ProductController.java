@@ -39,11 +39,11 @@ public class ProductController {
     }
 
     @Operation(summary = "카테고리별 상품 목록 조회", description = "특정 카테고리의 상품을 페이징하여 조회합니다.")
-    @GetMapping("/category/{category}")
+    @GetMapping("/category/{categoryId}")
     public PageResponse<ProductResponse> getListBy(
-            @Parameter(description = "카테고리명", example = "메인") @PathVariable("category") String category,
+            @Parameter(description = "카테고리명", example = "메인") @PathVariable("categoryId") Long categoryId,
             @ParameterObject @PageableDefault(size = 10) Pageable pageable) {
-        return productService.listByCategory(category, pageable);
+        return productService.listByCategory(categoryId, pageable);
     }
 
     @Operation(summary = "상품 상세 조회", description = "상품 ID로 상세 정보를 조회합니다.")

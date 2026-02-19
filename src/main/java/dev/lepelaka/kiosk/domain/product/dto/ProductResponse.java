@@ -1,5 +1,6 @@
 package dev.lepelaka.kiosk.domain.product.dto;
 
+import dev.lepelaka.kiosk.domain.category.dto.CategoryResponse;
 import dev.lepelaka.kiosk.domain.product.entity.Product;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -24,7 +25,7 @@ public record ProductResponse (
         String imageUrl,
         
         @Schema(description = "카테고리", example = "메인")
-        String category
+        CategoryResponse categoryResponse
 ) {
     public static ProductResponse fromEntity (Product product) {
         return new ProductResponse(
@@ -34,7 +35,7 @@ public record ProductResponse (
                 product.getQuantity(), 
                 product.getDescription(), 
                 product.getImageUrl(),
-                product.getCategory()
+                CategoryResponse.from(product.getCategory())
         );
     }
 }

@@ -1,9 +1,8 @@
-package dev.lepelaka.kiosk.repository;
+package dev.lepelaka.kiosk.domain.order.repository;
 
+import dev.lepelaka.kiosk.domain.category.entity.Category;
 import dev.lepelaka.kiosk.domain.order.entity.Order;
 import dev.lepelaka.kiosk.domain.order.entity.OrderItem;
-import dev.lepelaka.kiosk.domain.order.repository.OrderItemRepository;
-import dev.lepelaka.kiosk.domain.order.repository.OrderRepository;
 import dev.lepelaka.kiosk.domain.product.entity.Product;
 import dev.lepelaka.kiosk.domain.product.repository.ProductRepository;
 import dev.lepelaka.kiosk.domain.terminal.entity.Terminal;
@@ -61,13 +60,13 @@ class OrderItemRepositoryTest {
         product1 = Product.builder()
                 .name("짜장면")
                 .price(7000)
-                .category("메인")
+                .category(Category.builder().name("메인").build())
                 .build();
 
         product2 = Product.builder()
                 .name("짬뽕")
                 .price(8000)
-                .category("메인")
+                .category(Category.builder().name("메인").build())
                 .build();
 
         productRepository.saveAll(List.of(product1, product2));

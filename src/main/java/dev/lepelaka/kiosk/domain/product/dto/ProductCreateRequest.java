@@ -1,6 +1,8 @@
 package dev.lepelaka.kiosk.domain.product.dto;
 
 
+import dev.lepelaka.kiosk.domain.category.dto.CategoryCreateRequest;
+import dev.lepelaka.kiosk.domain.category.entity.Category;
 import dev.lepelaka.kiosk.domain.product.entity.Product;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -27,11 +29,11 @@ public record ProductCreateRequest(
         @Schema(description = "이미지 URL", example = "http://example.com/jjajang.jpg")
         String imageUrl,
 
-        @Schema(description = "카테고리", example = "메인")
+        @Schema(description = "카테고리 ID", example = "1")
         @NotBlank(message = "카테고리는 필수입니다.")
-        String category
+        Long categoryId
 ) {
-    public Product toEntity() {
+    public Product toEntity(Category category) {
         return Product.builder()
                 .name(name)
                 .price(price)

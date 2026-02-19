@@ -1,9 +1,12 @@
-package dev.lepelaka.kiosk.repository;
+package dev.lepelaka.kiosk.domain.product.repository;
 
+import dev.lepelaka.kiosk.domain.category.entity.Category;
+import dev.lepelaka.kiosk.domain.category.repository.CategoryRepository;
 import dev.lepelaka.kiosk.domain.product.entity.Product;
 import static org.assertj.core.api.Assertions.*;
 
-import dev.lepelaka.kiosk.domain.product.repository.ProductRepository;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,12 +21,23 @@ import java.util.List;
 public class ProductRepositoryTest {
     @Autowired
     private ProductRepository productRepository;
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     private Pageable pageable = PageRequest.of(0, 10);
+
+    private Category mainCategory;
+    private Category sideCategory;
 
     @Test
     public void testExist() {
         assertThat(productRepository).isNotNull();
+    }
+
+    @BeforeEach
+    public void setup() {
+        mainCategory = categoryRepository.save(Category.builder().name("메인").description("메인 메뉴입니다.").displayOrder(1).build());
+        sideCategory = categoryRepository.save(Category.builder().name("사이드").description("사이드 메뉴입니다.").displayOrder(2).build());
     }
 
     @Test
@@ -33,9 +47,9 @@ public class ProductRepositoryTest {
         Product product = Product.builder()
                 .name("짜장면")
                 .price(7000)
-                .category("메인")
                 .description("맛있는 짜장면")
                 .imageUrl("http://example.com/jjajang.jpg")
+                .category(mainCategory)
                 .build();
 
         // when
@@ -51,14 +65,14 @@ public class ProductRepositoryTest {
     @DisplayName("카테고리별 조회")
     void findByCategory() {
         // given
-        Product product1 = createProduct("짜장면", 7000, "메인");
-        Product product2 = createProduct("짬뽕", 8000, "메인");
-        Product product3 = createProduct("콜라", 2000, "음료");
+        Product product1 = createProduct("짜장면", 7000, mainCategory);
+        Product product2 = createProduct("짬뽕", 8000, mainCategory);
+        Product product3 = createProduct("콜라", 2000, sideCategory);
 
         productRepository.saveAll(List.of(product1, product2, product3));
 
         // when
-        Page<Product> mainProducts = productRepository.findByCategory("메인", pageable);
+        Page<Product> mainProducts = productRepository.findByCategory(mainCategory, pageable);
 
         // then
         assertThat(mainProducts).hasSize(2);
@@ -71,8 +85,8 @@ public class ProductRepositoryTest {
     @DisplayName("판매 가능한 상품만 조회")
     void findByActiveTrue() {
         // given
-        Product product1 = createProduct("짜장면", 7000, "메인");
-        Product product2 = createProduct("짬뽕", 8000, "메인");
+        Product product1 = createProduct("짜장면", 7000, mainCategory);
+        Product product2 = createProduct("짬뽕", 8000,mainCategory);
 
         productRepository.saveAll(List.of(product1, product2));
 
@@ -87,23 +101,23 @@ public class ProductRepositoryTest {
     @DisplayName("카테고리 + 판매가능 조회")
     void findByCategoryAndActiveTrue() {
         // given
-        Product product1 = createProduct("짜장면", 7000, "메인");
-        Product product2 = createProduct("짬뽕", 8000, "메인");
-        Product product3 = createProduct("콜라", 2000, "음료");
+        Product product1 = createProduct("짜장면", 7000, mainCategory);
+        Product product2 = createProduct("짬뽕", 8000, mainCategory);
+        Product product3 = createProduct("콜라", 2000, sideCategory);
 
         product2.deactivate();
         productRepository.saveAll(List.of(product1, product2, product3));
 
         // when
         Page<Product> mainProducts = productRepository
-                .findByCategoryAndActiveTrue("메인", pageable);
+                .findByCategoryAndActiveTrue(mainCategory, pageable);
 
         // then
         assertThat(mainProducts).hasSize(1);
     }
 
     // 헬퍼 메서드
-    private Product createProduct(String name, int price, String category) {
+    private Product createProduct(String name, int price, Category category) {
         return Product.builder()
                 .name(name)
                 .price(price)

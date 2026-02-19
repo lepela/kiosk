@@ -1,5 +1,8 @@
 package dev.lepelaka.kiosk.domain.product.service;
 
+import dev.lepelaka.kiosk.domain.category.entity.Category;
+import dev.lepelaka.kiosk.domain.category.exception.CategoryNotFoundException;
+import dev.lepelaka.kiosk.domain.category.repository.CategoryRepository;
 import dev.lepelaka.kiosk.domain.product.dto.ProductCreateRequest;
 import dev.lepelaka.kiosk.domain.product.dto.ProductResponse;
 import dev.lepelaka.kiosk.domain.product.dto.ProductUpdateRequest;
@@ -20,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ProductService {
     private final ProductRepository repository;
+    private final CategoryRepository categoryRepository;
 
     @Transactional
     @CacheEvict(value = "products", allEntries = true)
@@ -27,14 +31,17 @@ public class ProductService {
         if(repository.existsByName(request.name())) {
             throw new DuplicateProductException(request.name());
         }
-        return repository.save(request.toEntity()).getId();
+        Category category = categoryRepository.findById(request.categoryId()).orElseThrow(() -> new CategoryNotFoundException(request.categoryId()));
+        Product product = request.toEntity(category);
+        return repository.save(product).getId();
     }
 
     @Transactional
     @CacheEvict(value = "products", allEntries = true)
     public void modify(Long id, ProductUpdateRequest request) {
         Product product = repository.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
-        product.update(request.name(), request.price(), request.quantity(), request.description(), request.imageUrl(), request.category());
+        Category category = categoryRepository.findById(request.categoryId()).orElseThrow(() -> new CategoryNotFoundException(request.categoryId()));
+        product.update(request.name(), request.price(), request.quantity(), request.description(), request.imageUrl(), category);
     }
 
     @Transactional
@@ -52,7 +59,8 @@ public class ProductService {
         return PageResponse.from(repository.findAll(pageable).map(ProductResponse::fromEntity));
     }
 
-    public PageResponse<ProductResponse> listByCategory(String category, Pageable pageable) {
+    public PageResponse<ProductResponse> listByCategory(Long categoryId, Pageable pageable) {
+        Category category = categoryRepository.findById(categoryId).orElseThrow(() -> new CategoryNotFoundException(categoryId));
         return PageResponse.from(repository.findByCategory(category, pageable).map(ProductResponse::fromEntity));
     }
 
@@ -61,8 +69,9 @@ public class ProductService {
         return PageResponse.from(repository.findByActiveTrue(pageable).map(ProductResponse::fromEntity));
     }
 
-    @Cacheable(value = "products", key = "'category:' + #category + ':active:page:' + #pageable.pageNumber + ':size:' + #pageable.pageSize")
-    public PageResponse<ProductResponse> listByCategoryOnActive(String category, Pageable pageable) {
+    @Cacheable(value = "products", key = "'category:' + #categoryId + ':active:page:' + #pageable.pageNumber + ':size:' + #pageable.pageSize")
+    public PageResponse<ProductResponse> listByCategoryOnActive(Long categoryId, Pageable pageable) {
+        Category category = categoryRepository.findById(categoryId).orElseThrow(() -> new CategoryNotFoundException(categoryId));
         return PageResponse.from(repository.findByCategoryAndActiveTrue(category, pageable).map(ProductResponse::fromEntity));
     }
 

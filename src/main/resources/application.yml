@@ -23,7 +23,7 @@ spring:
     redis:
       host: localhost
       port: 6379
-      password: redis1234
+      # password: redis1234  <-- 로컬 윈도우 Redis는 기본적으로 비번이 없으므로 주석 처리
 
   cache:
     type: redis

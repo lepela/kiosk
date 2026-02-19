@@ -1,6 +1,5 @@
-package dev.lepelaka.kiosk.repository;
+package dev.lepelaka.kiosk.domain.order.repository;
 
-import dev.lepelaka.kiosk.domain.order.repository.OrderRepository;
 import dev.lepelaka.kiosk.domain.terminal.entity.Terminal;
 import dev.lepelaka.kiosk.domain.order.entity.Order;
 import dev.lepelaka.kiosk.domain.terminal.entity.enums.TerminalStatus;

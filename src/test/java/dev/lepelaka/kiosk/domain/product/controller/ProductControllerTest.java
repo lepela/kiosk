@@ -1,6 +1,8 @@
 package dev.lepelaka.kiosk.domain.product.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.lepelaka.kiosk.domain.category.dto.CategoryResponse;
+import dev.lepelaka.kiosk.domain.category.entity.Category;
 import dev.lepelaka.kiosk.domain.product.dto.ProductCreateRequest;
 import dev.lepelaka.kiosk.domain.product.dto.ProductResponse;
 import dev.lepelaka.kiosk.domain.product.dto.ProductUpdateRequest;
@@ -41,12 +43,14 @@ class ProductControllerTest {
     @MockitoBean
     private CacheManager cacheManager;
 
+    private CategoryResponse categoryResponse = CategoryResponse.from(Category.builder().name("메인").build());
+
     @Test
     @DisplayName("신규 상품을 등록한다.")
     void register() throws Exception {
         // given
         ProductCreateRequest request = new ProductCreateRequest(
-                "짜장면", 7000, 100, "맛있는 짜장면", "url", "메인"
+                "짜장면", 7000, 100, "맛있는 짜장면", "url", 1L
         );
 
         given(productService.register(any(ProductCreateRequest.class))).willReturn(1L);
@@ -68,7 +72,7 @@ class ProductControllerTest {
         // given
         Long productId = 1L;
         ProductUpdateRequest request = new ProductUpdateRequest(
-                "쟁반짜장", 8000, 50, "더 맛있는 짜장", "new_url", "메인"
+                "쟁반짜장", 8000, 50, "더 맛있는 짜장", "new_url", 1L
         );
 
         // when & then
@@ -98,7 +102,7 @@ class ProductControllerTest {
         // given
         Long productId = 1L;
         ProductResponse response = new ProductResponse(
-                productId, "짜장면", 7000, 100, "맛있는 짜장면", "url", "메인"
+                productId, "짜장면", 7000, 100, "맛있는 짜장면", "url", categoryResponse
         );
 
         given(productService.detail(productId)).willReturn(response);
@@ -117,9 +121,11 @@ class ProductControllerTest {
     void getActiveList() throws Exception {
         // given
         List<ProductResponse> content = List.of(
-                new ProductResponse(1L, "짜장면", 7000, 100, "맛있는 짜장면", "url", "메인"),
-                new ProductResponse(2L, "짬뽕", 8000, 100, "맛있는 짬뽕", "url", "메인")
-        );
+                new ProductResponse(1L, "짜장면", 7000, 100, "맛있는 짜장면", "url",
+                        categoryResponse),
+                new ProductResponse(2L, "짬뽕", 8000, 100, "맛있는 짬뽕", "url",
+                        categoryResponse));
+
         
 
         PageResponse<ProductResponse> response = PageResponse.from(new PageImpl<>(content, PageRequest.of(0, 10), 2));

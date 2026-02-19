@@ -1,5 +1,9 @@
 package dev.lepelaka.kiosk.domain.product.entity;
 
+import dev.lepelaka.kiosk.domain.category.entity.Category;
+import dev.lepelaka.kiosk.domain.order.exception.InsufficientStockException;
+import dev.lepelaka.kiosk.domain.product.exception.InactiveProductException;
+import dev.lepelaka.kiosk.domain.product.exception.InvalidQuantityException;
 import dev.lepelaka.kiosk.global.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -8,7 +12,7 @@ import org.hibernate.annotations.DynamicUpdate;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@ToString
+@ToString(exclude = "category")
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @DynamicUpdate
 public class Product extends BaseEntity {
@@ -24,19 +28,23 @@ public class Product extends BaseEntity {
     @Column(nullable = false)
     private int price;
 
-    private int quantity;  // 재고 (나중에 추가)
+    private int quantity;
 
     @Column(length = 500)
     private String description;
 
     private String imageUrl;
 
-    @Column(nullable = false, length = 50)
-    private String category;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
+
+    @Version
+    private Long version; // 낙관락 적용 목적
 
     @Builder
     public Product(String name, int price, int quantity,
-                   String description, String imageUrl, String category) {
+                   String description, String imageUrl, Category category) {
         this.name = name;
         this.price = price;
         this.quantity = quantity;
@@ -45,7 +53,7 @@ public class Product extends BaseEntity {
         this.category = category;
     }
 
-    public void update(String name, int price, int quantity, String description, String imageUrl, String category ) {
+    public void update(String name, int price, int quantity, String description, String imageUrl, Category category ) {
         this.name = name;
         this.price = price;
         this.quantity = quantity;
@@ -57,7 +65,28 @@ public class Product extends BaseEntity {
         this.quantity += quantity;
     }
 
-    public void decreaseQuantity(int quantity) {
-        this.quantity -= quantity;
+    public void decreaseQuantity(int requestedQuantity) {
+        if(requestedQuantity <= 0) throw new InvalidQuantityException(id, requestedQuantity);
+        if (this.quantity < requestedQuantity) {
+            throw new InsufficientStockException(id, requestedQuantity, this.quantity);
+        }
+        this.quantity -= requestedQuantity;
     }
+
+    public void validateActive() {
+        if(!isActive()) {
+            throw new InactiveProductException(id);
+        }
+    }
+    /**
+     * 주문 도메인 행위.
+     * - 활성 상품인지 검증
+     * - 재고 충분성 검증
+     * - 재고 차감 수행
+     */
+    public void order(int requestedQuantity) {
+        validateActive();
+        decreaseQuantity(requestedQuantity);
+    }
+
 }

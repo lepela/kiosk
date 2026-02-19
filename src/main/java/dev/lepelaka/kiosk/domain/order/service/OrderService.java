@@ -68,16 +68,6 @@ public class OrderService {
         Map<Long, Integer> quantityMap = itemRequests.stream().collect(Collectors.toMap(OrderItemRequest::productId, OrderItemRequest::quantity, Integer::sum));
 
 
-        // 6. 상품별 재고, 비활성 체크
-        for(Product product : products) {
-            if(!product.isActive()) {
-                throw new InactiveProductException(product.getId());
-            }
-            int quantity = quantityMap.get(product.getId());
-            if (product.getQuantity() < quantity) {
-                throw new InsufficientStockException(product.getId(), quantity, product.getQuantity());
-            }
-        }
         // 7. 주문번호 생성 후 주문 생성
         Order order = Order.builder()
                 .terminal(terminal)
@@ -85,11 +75,11 @@ public class OrderService {
                 .status(OrderStatus.PENDING)
                 .build();
 
-
         for(Product product : products) {
             int quantity = quantityMap.get(product.getId());
             // 8. 재고감소
-            product.decreaseQuantity(quantity);
+//            product.decreaseQuantity(quantity);
+            product.order(quantity);
 
             // 9. 상품 스냅샷 촬영
             String productName = product.getName();

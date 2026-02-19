@@ -1,5 +1,6 @@
 package dev.lepelaka.kiosk.domain.product.repository;
 
+import dev.lepelaka.kiosk.domain.category.entity.Category;
 import dev.lepelaka.kiosk.domain.product.entity.Product;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
@@ -16,11 +17,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("select p from Product p where p.id in :ids")
     List<Product> findAllByIdWithPessimisticLock(List<Long> ids);
 
-    Page<Product> findByCategory(String category, Pageable pageable);
+    Page<Product> findByCategory(Category category, Pageable pageable);
 
     Page<Product> findByActiveTrue(Pageable pageable);
 
-    Page<Product> findByCategoryAndActiveTrue(String category, Pageable pageable);
+    Page<Product> findByCategoryAndActiveTrue(Category category, Pageable pageable);
 
     boolean existsByName(String name);
 }

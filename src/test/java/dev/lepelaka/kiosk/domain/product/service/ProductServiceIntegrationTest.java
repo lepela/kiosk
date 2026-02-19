@@ -1,157 +1,127 @@
 package dev.lepelaka.kiosk.domain.product.service;
 
+import dev.lepelaka.kiosk.domain.category.entity.Category;
+import dev.lepelaka.kiosk.domain.category.repository.CategoryRepository;
 import dev.lepelaka.kiosk.domain.product.dto.ProductCreateRequest;
 import dev.lepelaka.kiosk.domain.product.dto.ProductResponse;
 import dev.lepelaka.kiosk.domain.product.dto.ProductUpdateRequest;
-import dev.lepelaka.kiosk.domain.product.entity.Product;
 import dev.lepelaka.kiosk.domain.product.repository.ProductRepository;
-import dev.lepelaka.kiosk.global.common.dto.PageResponse;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.NoSuchElementException;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
-@Transactional // 테스트 종료 후 롤백 (데이터 초기화)
+@Transactional
 class ProductServiceIntegrationTest {
 
     @Autowired
     private ProductService productService;
 
-    @Autowired
+    @MockitoSpyBean
     private ProductRepository productRepository;
 
-    @AfterEach
-    void tearDown() {
-        productRepository.deleteAllInBatch();
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+    private Category category;
+
+    @BeforeEach
+    void setUp() {
+        // 테스트용 카테고리 미리 생성
+        category = categoryRepository.save(Category.builder()
+                .name("커피")
+                .description("커피입니다")
+                .displayOrder(1)
+                .build());
     }
 
+    @DisplayName("상품 생성, 조회, 수정 시 캐시 동작을 검증한다.")
     @Test
-    @DisplayName("상품을 등록하고 조회한다.")
-    void register_and_find() {
-        // given
-        ProductCreateRequest request = new ProductCreateRequest(
-                "짜장면", 7000, 100, "맛있는 짜장면", "url", "메인"
+    void productLifecycleAndCache() {
+        // 1. 상품 생성
+        ProductCreateRequest createRequest = new ProductCreateRequest(
+                "아메리카노", 5000, 100, "시원한 커피", "url", category.getId()
         );
+        Long productId = productService.register(createRequest);
+
+        // 2. 상세 조회 (1차 - DB 조회 발생)
+        ProductResponse response1 = productService.detail(productId);
+        assertThat(response1.name()).isEqualTo("아메리카노");
+
+        verify(productRepository, times(1)).findById(productId);
+
+        // 3. 상세 조회 (2차 - 캐시 적중, DB 조회 안 함)
+        ProductResponse response2 = productService.detail(productId);
+        assertThat(response2.name()).isEqualTo("아메리카노");
+
+        // 호출 횟수 유지 (1회)
+        verify(productRepository, times(1)).findById(productId);
+
+        // 4. 상품 수정 (캐시 무효화 @CacheEvict)
+        ProductUpdateRequest updateRequest = new ProductUpdateRequest(
+                "아이스 아메리카노", 5500, 100, "더 시원한 커피", "newUrl", category.getId()
+        );
+        productService.modify(productId, updateRequest);
+
+        // 5. 상세 조회 (3차 - 캐시 깨짐, DB 조회 발생)
+        ProductResponse response3 = productService.detail(productId);
+        assertThat(response3.name()).isEqualTo("아이스 아메리카노");
+        assertThat(response3.price()).isEqualTo(5500);
+
+        // 호출 횟수 증가 (modify 내부 조회 1회 + 조회 1회 = 총 2회 추가 -> 누적 3회)
+        // modify에서 findById를 호출하므로 누적 횟수를 잘 계산해야 함.
+        // 1(첫조회) + 1(modify) + 1(수정후조회) = 3
+        verify(productRepository, times(3)).findById(productId);
+    }
+
+    @DisplayName("활성 상품 목록 조회 시 캐싱이 적용된다.")
+    @Test
+    void listOnActiveCache() {
+        // given
+        createProduct("P1", 1000);
+        createProduct("P2", 2000);
+        Pageable pageable = PageRequest.of(0, 10);
 
         // when
-        Long savedId = productService.register(request);
+        // 1. 첫 번째 조회
+        productService.listOnActive(pageable);
+        verify(productRepository, times(1)).findByActiveTrue(pageable);
+
+        // 2. 두 번째 조회 (캐시 적중)
+        productService.listOnActive(pageable);
 
         // then
-        assertThat(savedId).isNotNull();
-
-        ProductResponse response = productService.detail(savedId);
-        assertThat(response.name()).isEqualTo("짜장면");
-        assertThat(response.price()).isEqualTo(7000);
-        assertThat(response.category()).isEqualTo("메인");
+        // 호출 횟수 유지
+        verify(productRepository, times(1)).findByActiveTrue(pageable);
     }
 
+    @DisplayName("상품 삭제 시 캐시가 무효화된다.")
     @Test
-    @DisplayName("상품 정보를 수정한다.")
-    void modify() {
+    void removeEvictsCache() {
         // given
-        Product product = Product.builder()
-                .name("짜장면")
-                .price(7000)
-                .quantity(100)
-                .description("맛있는 짜장면")
-                .imageUrl("url")
-                .category("메인")
-                .build();
-        productRepository.save(product);
-
-        ProductUpdateRequest request = new ProductUpdateRequest(
-                "쟁반짜장", 8000, 50, "더 맛있는 짜장", "new_url", "메인"
-        );
+        Long productId = productService.register(new ProductCreateRequest("삭제할상품", 1000, 10, "desc", "url", category.getId()));
+        productService.detail(productId); // 캐싱 (findById 1회)
 
         // when
-        productService.modify(product.getId(), request);
+        productService.remove(productId); // 삭제 (내부 findById 1회 -> 누적 2회)
 
         // then
-        ProductResponse response = productService.detail(product.getId());
-        assertThat(response.name()).isEqualTo("쟁반짜장");
-        assertThat(response.price()).isEqualTo(8000);
-        assertThat(response.quantity()).isEqualTo(50);
+        // 다시 조회 시 DB 호출 발생해야 함 (캐시가 지워졌으므로)
+        productService.detail(productId); // (findById 1회 -> 누적 3회)
+
+        verify(productRepository, times(3)).findById(productId);
     }
 
-    @Test
-    @DisplayName("상품 정보를 수정한다. DynamicUpdate 적용")
-    void modify_on_dirty() {
-        // given
-        Product product = Product.builder()
-                .name("짜장면")
-                .price(7000)
-                .quantity(100)
-                .description("맛있는 짜장면")
-                .imageUrl("url")
-                .category("메인")
-                .build();
-        productRepository.save(product);
-
-        ProductUpdateRequest request = new ProductUpdateRequest(
-                "쟁반짜장",
-                7000, // 미수정
-                50,
-                null, // null
-                "new_url",
-                "메인"
-        );
-
-        // when
-        productService.modify(product.getId(), request);
-
-        // then
-        ProductResponse response = productService.detail(product.getId());
-        assertThat(response.name()).isEqualTo("쟁반짜장");
-        assertThat(response.price()).isEqualTo(7000);
-        assertThat(response.quantity()).isEqualTo(50);
-    }
-
-    @Test
-    @DisplayName("존재하지 않는 상품 수정 시 예외가 발생한다.")
-    void modify_fail() {
-        // given
-        ProductUpdateRequest request = new ProductUpdateRequest(
-                "쟁반짜장", 8000, 50, "더 맛있는 짜장", "new_url", "메인"
-        );
-
-        // when & then
-        assertThatThrownBy(() -> productService.modify(999L, request))
-                .isInstanceOf(NoSuchElementException.class)
-                .hasMessage("상품이 존재하지 않습니다");
-    }
-
-    @Test
-    @DisplayName("상품을 삭제(Soft Delete)한다.")
-    void delete() {
-        // given
-        Product product = Product.builder()
-                .name("짜장면")
-                .price(7000)
-                .quantity(100)
-                .description("맛있는 짜장면")
-                .imageUrl("url")
-                .category("메인")
-                .build();
-        productRepository.save(product);
-
-        // when
-        productService.remove(product.getId());
-
-        // then
-        Product deletedProduct = productRepository.findById(product.getId()).orElseThrow();
-        assertThat(deletedProduct.isActive()).isFalse();
-        
-        // listOnActive() 조회 시 제외되는지 확인
-        PageResponse<ProductResponse> activeProducts = productService.listOnActive(PageRequest.of(0, 10));
-        assertThat(activeProducts.content()).isEmpty();
+    private void createProduct(String name, int price) {
+        productService.register(new ProductCreateRequest(name, price, 10, "desc", "url", category.getId()));
     }
 }

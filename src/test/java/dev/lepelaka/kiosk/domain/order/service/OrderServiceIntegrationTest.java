@@ -1,5 +1,6 @@
 package dev.lepelaka.kiosk.domain.order.service;
 
+import dev.lepelaka.kiosk.domain.category.entity.Category;
 import dev.lepelaka.kiosk.domain.order.component.OrderNumberGenerator;
 import dev.lepelaka.kiosk.domain.order.dto.OrderCreateRequest;
 import dev.lepelaka.kiosk.domain.order.dto.OrderItemRequest;
@@ -153,7 +154,7 @@ class OrderServiceIntegrationTest {
         assertThat(restoredProduct.getQuantity()).isEqualTo(5); // 다시 5로 복구
     }
 
-    private Product createProduct(String name, int price, int quantity, String category) {
-        return Product.builder().name(name).price(price).quantity(quantity).category(category).build();
+    private Product createProduct(String name, int price, int quantity, String categoryName) {
+        return Product.builder().name(name).price(price).quantity(quantity).category(Category.builder().name(categoryName).build()).build();
     }
 }

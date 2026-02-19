@@ -1,6 +1,7 @@
 package dev.lepelaka.kiosk.domain.product.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.lepelaka.kiosk.domain.category.entity.Category;
 import dev.lepelaka.kiosk.domain.product.dto.ProductCreateRequest;
 import dev.lepelaka.kiosk.domain.product.dto.ProductUpdateRequest;
 import dev.lepelaka.kiosk.domain.product.entity.Product;
@@ -50,7 +51,7 @@ class ProductControllerIntegrationTest {
     void register() throws Exception {
         // given
         ProductCreateRequest request = new ProductCreateRequest(
-                "짜장면", 7000, 100, "맛있는 짜장면", "url", "메인"
+                "짜장면", 7000, 100, "맛있는 짜장면", "url", 1L
         );
 
         // when & then
@@ -74,12 +75,12 @@ class ProductControllerIntegrationTest {
                 .quantity(100)
                 .description("맛있는 짜장면")
                 .imageUrl("url")
-                .category("메인")
+                .category(Category.builder().name("메인").build())
                 .build();
         productRepository.save(product);
 
         ProductUpdateRequest request = new ProductUpdateRequest(
-                "쟁반짜장", 8000, 50, "더 맛있는 짜장", "new_url", "메인"
+                "쟁반짜장", 8000, 50, "더 맛있는 짜장", "new_url", 1L
         );
 
         // when & then
@@ -101,7 +102,7 @@ class ProductControllerIntegrationTest {
                 .quantity(100)
                 .description("맛있는 짜장면")
                 .imageUrl("url")
-                .category("메인")
+                .category(Category.builder().name("메인").build())
                 .build();
         productRepository.save(product);
 
@@ -121,7 +122,7 @@ class ProductControllerIntegrationTest {
                 .quantity(100)
                 .description("맛있는 짜장면")
                 .imageUrl("url")
-                .category("메인")
+                .category(Category.builder().name("메인").build())
                 .build();
         productRepository.save(product);
 
@@ -138,8 +139,8 @@ class ProductControllerIntegrationTest {
     @DisplayName("판매 중인 상품 목록을 조회한다. (페이징)")
     void getActiveList() throws Exception {
         // given
-        Product product1 = Product.builder().name("짜장면").price(7000).quantity(100).description("맛있는 짜장면").imageUrl("url").category("메인").build();
-        Product product2 = Product.builder().name("짬뽕").price(8000).quantity(100).description("맛있는 짬뽕").imageUrl("url").category("메인").build();
+        Product product1 = Product.builder().name("짜장면").price(7000).quantity(100).description("맛있는 짜장면").imageUrl("url").category(Category.builder().name("메인").build()).build();
+        Product product2 = Product.builder().name("짬뽕").price(8000).quantity(100).description("맛있는 짬뽕").imageUrl("url").category(Category.builder().name("메인").build()).build();
         productRepository.saveAll(java.util.List.of(product1, product2));
 
         // when & then

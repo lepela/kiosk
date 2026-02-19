@@ -1,30 +1,30 @@
 package dev.lepelaka.kiosk.domain.product.service;
 
+import dev.lepelaka.kiosk.domain.category.entity.Category;
+import dev.lepelaka.kiosk.domain.category.exception.CategoryNotFoundException;
+import dev.lepelaka.kiosk.domain.category.repository.CategoryRepository;
 import dev.lepelaka.kiosk.domain.product.dto.ProductCreateRequest;
 import dev.lepelaka.kiosk.domain.product.dto.ProductResponse;
 import dev.lepelaka.kiosk.domain.product.dto.ProductUpdateRequest;
 import dev.lepelaka.kiosk.domain.product.entity.Product;
+import dev.lepelaka.kiosk.domain.product.exception.DuplicateProductException;
+import dev.lepelaka.kiosk.domain.product.exception.ProductNotFoundException;
 import dev.lepelaka.kiosk.domain.product.repository.ProductRepository;
-import dev.lepelaka.kiosk.global.common.dto.PageResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,109 +36,112 @@ class ProductServiceTest {
     @Mock
     private ProductRepository productRepository;
 
+    @Mock
+    private CategoryRepository categoryRepository;
+
+    @DisplayName("상품을 등록하면 저장된 ID를 반환한다.")
     @Test
-    @DisplayName("상품 등록 성공")
     void register() {
         // given
-        ProductCreateRequest request = new ProductCreateRequest(
-                "짜장면", 7000, 100, "맛있는 짜장면", "url", "메인"
-        );
-        Product product = request.toEntity();
+        ProductCreateRequest request = new ProductCreateRequest("아메리카노", 5000, 100, "설명", "url", 1L);
+
+        Product product = Product.builder().name("아메리카노").build();
+        ReflectionTestUtils.setField(product, "id", 1L);
         
-        // Mocking: save 호출 시 product 반환
+        Category category = Category.builder().name("커피").build();
+        ReflectionTestUtils.setField(category, "id", 1L);
+
+        given(productRepository.existsByName(request.name())).willReturn(false);
+
+        given(categoryRepository.findById(request.categoryId())).willReturn(Optional.of(category));
+
         given(productRepository.save(any(Product.class))).willReturn(product);
 
         // when
         Long savedId = productService.register(request);
 
         // then
-        assertThat(savedId).isEqualTo(product.getId());
+        assertThat(savedId).isEqualTo(1L);
         verify(productRepository).save(any(Product.class));
     }
 
+    @DisplayName("이미 존재하는 상품명으로 등록하면 예외가 발생한다.")
     @Test
-    @DisplayName("상품 수정 성공")
-    void modify_success() {
+    void register_Duplicate() {
+        // given
+        ProductCreateRequest request = new ProductCreateRequest("아메리카노", 5000, 100, "설명", "url", 1L);
+        given(productRepository.existsByName(request.name())).willReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> productService.register(request))
+                .isInstanceOf(DuplicateProductException.class);
+    }
+
+    @DisplayName("상품 정보를 수정한다.")
+    @Test
+    void modify() {
         // given
         Long productId = 1L;
-        Product product = Product.builder()
-                .name("짜장면")
-                .price(7000)
-                .quantity(100)
-                .description("맛있는 짜장면")
-                .imageUrl("url")
-                .category("메인")
-                .build();
+        Long categoryId = 2L;
+        ProductUpdateRequest request = new ProductUpdateRequest("라떼", 5500, 50, "우유 듬뿍", "newUrl", categoryId);
 
-        // Mocking: findById 호출 시 product 반환
+        Product product = Product.builder().name("아메리카노").price(5000).build();
+        Category category = Category.builder().name("커피").build();
+        ReflectionTestUtils.setField(category, "id", categoryId);
+
         given(productRepository.findById(productId)).willReturn(Optional.of(product));
-
-        ProductUpdateRequest request = new ProductUpdateRequest(
-                "쟁반짜장", 8000, 50, "더 맛있는 짜장", "new_url", "메인"
-        );
+        given(categoryRepository.findById(categoryId)).willReturn(Optional.of(category));
 
         // when
         productService.modify(productId, request);
 
         // then
-        assertThat(product.getName()).isEqualTo("쟁반짜장");
-        assertThat(product.getPrice()).isEqualTo(8000);
-        assertThat(product.getQuantity()).isEqualTo(50);
+        assertThat(product.getName()).isEqualTo("라떼");
+        assertThat(product.getPrice()).isEqualTo(5500);
+        assertThat(product.getCategory()).isEqualTo(category);
     }
 
+    @DisplayName("존재하지 않는 상품을 수정하려 하면 예외가 발생한다.")
     @Test
-    @DisplayName("상품 수정 실패 - 존재하지 않는 상품")
-    void modify_fail_not_found() {
+    void modify_ProductNotFound() {
         // given
         Long productId = 999L;
-        ProductUpdateRequest request = new ProductUpdateRequest(
-                "쟁반짜장", 8000, 50, "더 맛있는 짜장", "new_url", "메인"
-        );
-
+        ProductUpdateRequest request = new ProductUpdateRequest("라떼", 5500, 50, "desc", "url", 1L);
         given(productRepository.findById(productId)).willReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> productService.modify(productId, request))
-                .isInstanceOf(NoSuchElementException.class)
-                .hasMessage("상품이 존재하지 않습니다");
+                .isInstanceOf(ProductNotFoundException.class);
     }
 
+    @DisplayName("수정 시 존재하지 않는 카테고리를 지정하면 예외가 발생한다.")
     @Test
-    @DisplayName("상품 삭제 성공 (Soft Delete)")
-    void delete_success() {
+    void modify_CategoryNotFound() {
         // given
         Long productId = 1L;
-        Product product = Product.builder()
-                .name("짜장면")
-                .price(7000)
-                .quantity(100)
-                .description("맛있는 짜장면")
-                .imageUrl("url")
-                .category("메인")
-                .build();
+        Long categoryId = 999L;
+        ProductUpdateRequest request = new ProductUpdateRequest("라떼", 5500, 50, "desc", "url", categoryId);
+        Product product = mock(Product.class);
 
         given(productRepository.findById(productId)).willReturn(Optional.of(product));
+        given(categoryRepository.findById(categoryId)).willReturn(Optional.empty());
 
-        // when
-        productService.remove(productId);
-
-        // then
-        assertThat(product.isActive()).isFalse(); // BaseEntity의 active 필드 확인
+        // when & then
+        assertThatThrownBy(() -> productService.modify(productId, request))
+                .isInstanceOf(CategoryNotFoundException.class);
     }
 
+    @DisplayName("상품 상세 정보를 조회한다.")
     @Test
-    @DisplayName("상품 상세 조회 성공")
-    void detail_success() {
+    void detail() {
         // given
         Long productId = 1L;
-        Product product = Product.builder()
-                .name("짜장면")
-                .price(7000)
-                .quantity(100)
-                .description("맛있는 짜장면")
-                .imageUrl("url")
-                .category("메인")
-                .build();
+        Product product = Product.builder().name("아메리카노").price(5000).build();
+        ReflectionTestUtils.setField(product, "id", productId);
+        
+        // ProductResponse.fromEntity 내부에서 category 접근 시 NPE 방지용
+        Category category = Category.builder().name("커피").build();
+        ReflectionTestUtils.setField(product, "category", category);
 
         given(productRepository.findById(productId)).willReturn(Optional.of(product));
 
@@ -146,29 +149,22 @@ class ProductServiceTest {
         ProductResponse response = productService.detail(productId);
 
         // then
-        assertThat(response.name()).isEqualTo("짜장면");
-        assertThat(response.price()).isEqualTo(7000);
+        assertThat(response.name()).isEqualTo("아메리카노");
+        assertThat(response.price()).isEqualTo(5000);
     }
 
+    @DisplayName("상품을 삭제(비활성화)한다.")
     @Test
-    @DisplayName("상품 목록 조회 (페이징)")
-    void list() {
+    void remove() {
         // given
-        Product p1 = Product.builder().name("짜장면").price(7000).quantity(100).description("맛있는 짜장면").imageUrl("url").category("메인").build();
-        Product p2 = Product.builder().name("짬뽕").price(8000).quantity(100).description("맛있는 짬뽕").imageUrl("url").category("메인").build();
-        
-        PageRequest pageRequest = PageRequest.of(0, 10);
-        Page<Product> productPage = new PageImpl<>(List.of(p1, p2), pageRequest, 2);
-
-        given(productRepository.findAll(any(Pageable.class))).willReturn(productPage);
+        Long productId = 1L;
+        Product product = mock(Product.class); // 행위 검증을 위해 Mock 사용
+        given(productRepository.findById(productId)).willReturn(Optional.of(product));
 
         // when
-        PageResponse<ProductResponse> response = productService.list(pageRequest);
+        productService.remove(productId);
 
         // then
-        assertThat(response.content()).hasSize(2);
-        assertThat(response.content()).extracting("name").containsExactly("짜장면", "짬뽕");
-        assertThat(response.totalElements()).isEqualTo(2);
-        assertThat(response.totalPages()).isEqualTo(1);
+        verify(product).deactivate(); // Product 엔티티의 deactivate 메서드 호출 검증
     }
 }

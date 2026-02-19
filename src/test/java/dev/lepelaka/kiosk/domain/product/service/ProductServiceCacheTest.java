@@ -41,7 +41,7 @@ class ProductServiceCacheTest {
     void cache_hit() {
         // given
         ProductCreateRequest request = new ProductCreateRequest(
-                "짜장면", 7000, 100, "맛있는 짜장면", "url", "메인"
+                "짜장면", 7000, 100, "맛있는 짜장면", "url", 1L
         );
         Long savedId = productService.register(request);
         log.info("=== [1] 상품 등록 완료 (ID: {}) ===", savedId);
@@ -68,7 +68,7 @@ class ProductServiceCacheTest {
     void cache_evict() {
         // given
         ProductCreateRequest createRequest = new ProductCreateRequest(
-                "짜장면", 7000, 100, "맛있는 짜장면", "url", "메인"
+                "짜장면", 7000, 100, "맛있는 짜장면", "url", 1L
         );
         Long savedId = productService.register(createRequest);
         log.info("=== [1] 상품 등록 완료 (ID: {}) ===", savedId);
@@ -80,7 +80,7 @@ class ProductServiceCacheTest {
 
         // when
         ProductUpdateRequest updateRequest = new ProductUpdateRequest(
-                "쟁반짜장", 8000, 50, "더 맛있는 짜장", "new_url", "메인"
+                "쟁반짜장", 8000, 50, "더 맛있는 짜장", "new_url", 1L
         );
         log.info("=== [3] 상품 수정 요청 (캐시 삭제 예상) ===");
         productService.modify(savedId, updateRequest);

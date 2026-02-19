@@ -6,7 +6,6 @@ import lombok.Builder;
 @Builder
 public class OrderItemResponse {
     private Long id;
-    private Long orderId;
     private Long productId;
     private String productName;
     private int quantity;
@@ -15,7 +14,6 @@ public class OrderItemResponse {
     public static OrderItemResponse from(OrderItem orderItem) {
         return OrderItemResponse.builder()
                 .id(orderItem.getId())
-                .orderId(orderItem.getOrder().getId())
                 .productId(orderItem.getProductId())
                 .productName(orderItem.getProductName())
                 .quantity(orderItem.getQuantity())
