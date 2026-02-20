@@ -65,7 +65,7 @@ class OrderControllerIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        terminal = terminalRepository.save(Terminal.builder().name("강남점 키오스크 1번").status(TerminalStatus.ACTIVE).build());
+        terminal = terminalRepository.save(Terminal.builder().name("강남점 키오스크 1번").build());
         Category category = categoryRepository.save(Category.builder().name("커피").displayOrder(1).build());
         product = productRepository.save(Product.builder()
                 .name("아메리카노")

@@ -40,7 +40,6 @@ class OrderRepositoryTest {
     void setUp() {
         terminal = Terminal.builder()
                 .name("매장1-1호기")
-                .status(TerminalStatus.ACTIVE)
                 .build();
         terminalRepository.save(terminal);
     }

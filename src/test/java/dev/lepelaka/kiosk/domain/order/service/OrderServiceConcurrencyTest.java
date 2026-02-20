@@ -55,7 +55,7 @@ class OrderServiceConcurrencyTest {
     @BeforeEach
     void setUp() {
         // 멀티스레드 환경에서 접근해야 하므로 @Transactional 없이 실제 DB에 저장
-        terminal = terminalRepository.save(Terminal.builder().name("동시성 테스트 키오스크").status(TerminalStatus.ACTIVE).build());
+        terminal = terminalRepository.save(Terminal.builder().name("동시성 테스트 키오스크").build());
         Category category = categoryRepository.save(Category.builder().name("테스트 카테고리").displayOrder(1).build());
         
         product = productRepository.save(Product.builder()

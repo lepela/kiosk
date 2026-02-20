@@ -24,7 +24,6 @@ class TerminalRepositoryTest {
         // given
         Terminal terminal = Terminal.builder()
                 .name("매장1-1호기")
-                .status(TerminalStatus.ACTIVE)
                 .build();
 
         // when
@@ -92,7 +91,6 @@ class TerminalRepositoryTest {
     private Terminal createTerminal(String name, TerminalStatus status) {
         return Terminal.builder()
                 .name(name)
-                .status(status)
                 .build();
     }
 }

@@ -59,7 +59,7 @@ class OrderServiceIntegrationTest {
         productRepository.deleteAll();
         terminalRepository.deleteAll();
         category = categoryRepository.save(Category.builder().name("메인").displayOrder(1).description("메인메뉴").build());
-        terminal = terminalRepository.save(Terminal.builder().name("강남점 키오스크 1번").status(TerminalStatus.ACTIVE).build());
+        terminal = terminalRepository.save(Terminal.builder().name("강남점 키오스크 1번").build());
     }
 
     @DisplayName("주문 생성 시 재고가 차감되고 주문 내역이 저장된다.")

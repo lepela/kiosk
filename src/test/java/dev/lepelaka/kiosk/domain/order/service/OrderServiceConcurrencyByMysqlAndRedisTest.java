@@ -91,7 +91,7 @@ public class OrderServiceConcurrencyByMysqlAndRedisTest {
 
     @BeforeEach
     void setUp() {
-        terminal = terminalRepository.save(Terminal.builder().name("MySQL 테스트 키오스크").status(TerminalStatus.ACTIVE).build());
+        terminal = terminalRepository.save(Terminal.builder().name("MySQL 테스트 키오스크").build());
         Category category = categoryRepository.save(Category.builder().name("테스트 카테고리").displayOrder(1).build());
 
         // 재고 10개 설정

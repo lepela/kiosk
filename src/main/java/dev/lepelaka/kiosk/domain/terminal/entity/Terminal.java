@@ -35,9 +35,14 @@ public class Terminal extends BaseEntity {
     private List<Order> orders = new ArrayList<>();
 
     @Builder
-    public Terminal(String name, TerminalStatus status) {
+    public Terminal(String name) {
         this.name = name;
-        this.status = status;
     }
 
+    public void invalidate() {
+        this.status = TerminalStatus.INACTIVE;
+    }
+    public void maintenance () {
+        status = TerminalStatus.MAINTENANCE;
+    }
 }
