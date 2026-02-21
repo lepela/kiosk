@@ -1,4 +1,4 @@
 package dev.lepelaka.kiosk.domain.terminal.dto;
 
-public class TerminalResponse {
+public record TerminalResponse (){
 }

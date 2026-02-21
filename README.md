@@ -104,3 +104,107 @@ docker compose up -d
 - Phase 1: Front(React JSX + Zustand) 연결 + AWS 배포
 - Phase 2: Store/Inventory + MSA 전환 (서비스 바운더리/데이터 일관성 전략 문서화)
 - Phase 3: Voice Kiosk (Spring AI + TTS/STT)
+
+## Order / Payment Flow
+
+```mermaid
+sequenceDiagram
+    participant Term as Terminal UI
+    participant API as Backend API
+    participant DB as MySQL
+    participant R as Redis
+    participant PG as Payment Gateway
+
+    Term->>API: POST /api/orders
+    API->>R: Acquire Lock (Product IDs)
+
+    alt Stock Available
+        API->>DB: SELECT FOR UPDATE
+        API->>DB: Decrease Stock
+        API->>DB: Save Order (PENDING)
+        API->>R: Release Lock
+        API-->>Term: 201 Order Created
+
+        Term->>API: POST /api/payments
+        API->>PG: Request Payment
+
+        alt Payment Success
+            PG-->>API: Approved
+            API->>DB: Update Order (CONFIRMED)
+            API-->>Term: 200 Payment Success
+        else Payment Failed
+            PG-->>API: Failed
+            API->>DB: Update Order (CANCELLED)
+            API->>DB: Restore Stock
+            API-->>Term: 400 Payment Failed
+        end
+
+    else Out of Stock
+        API->>R: Release Lock
+        API-->>Term: 400 Insufficient Stock
+    end
+```
+
+## Cache Flow
+```mermaid
+sequenceDiagram
+    participant Term as Terminal UI
+    participant API as Backend API
+    participant Cache as Redis Cache
+    participant DB as MySQL
+    participant PG as Payment Gateway
+
+    Note over Term,PG: Product Inquiry (with Cache)
+    Term->>API: GET /api/products
+    API->>Cache: Check Cache
+    
+    alt Cache Hit
+        Cache-->>API: Cached Products
+    else Cache Miss
+        API->>DB: Query Products
+        DB-->>API: Products
+        API->>Cache: Store Cache
+    end
+    API-->>Term: Product List
+
+    Note over Term,PG: Order & Payment Flow
+    Term->>API: POST /api/orders
+    API->>DB: Pessimistic Lock & Save
+    API->>Cache: Invalidate Product Cache
+    API-->>Term: Order Created
+    
+    Term->>API: POST /api/payments
+    API->>PG: Payment Request
+    PG-->>API: Payment Result
+    API->>DB: Update Order Status
+    API-->>Term: Payment Result
+```
+
+## Concurrent Order Flow
+```mermaid
+sequenceDiagram
+    participant U1 as User 1
+    participant U2 as User 2
+    participant API as Order Service
+    participant DB as MySQL
+    
+    Note over U1,DB: Concurrent Order Scenario
+    
+    par User 1 Orders
+        U1->>API: Create Order (Product A)
+        API->>DB: SELECT FOR UPDATE
+        Note right of DB: Lock acquired by User 1
+        API->>DB: Decrease Stock (10→9)
+        API->>DB: COMMIT
+        Note right of DB: Lock released
+        API-->>U1: Success
+    and User 2 Orders
+        U2->>API: Create Order (Product A)
+        API->>DB: SELECT FOR UPDATE
+        Note right of DB: Waiting for lock...
+        Note right of DB: Lock acquired by User 2
+        API->>DB: Decrease Stock (9→8)
+        API->>DB: COMMIT
+        API-->>U2: Success
+    end
+```

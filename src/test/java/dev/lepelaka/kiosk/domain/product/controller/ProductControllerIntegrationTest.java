@@ -2,11 +2,14 @@ package dev.lepelaka.kiosk.domain.product.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.lepelaka.kiosk.domain.category.entity.Category;
+import dev.lepelaka.kiosk.domain.category.repository.CategoryRepository;
 import dev.lepelaka.kiosk.domain.product.dto.ProductCreateRequest;
 import dev.lepelaka.kiosk.domain.product.dto.ProductUpdateRequest;
 import dev.lepelaka.kiosk.domain.product.entity.Product;
 import dev.lepelaka.kiosk.domain.product.repository.ProductRepository;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +41,9 @@ class ProductControllerIntegrationTest {
     private ProductRepository productRepository;
 
     @Autowired
+    private CategoryRepository categoryRepository;
+
+    @Autowired
     private CacheManager cacheManager;
 
     @AfterEach
@@ -46,12 +52,18 @@ class ProductControllerIntegrationTest {
         Objects.requireNonNull(cacheManager.getCache("products")).clear();
     }
 
+    private Category category;
+    @BeforeEach
+    public void setup() {
+        category = categoryRepository.save(Category.builder().name("메인").description("메인 메뉴입니다.").displayOrder(1).build());
+    }
+
     @Test
     @DisplayName("신규 상품을 등록한다.")
     void register() throws Exception {
         // given
         ProductCreateRequest request = new ProductCreateRequest(
-                "짜장면", 7000, 100, "맛있는 짜장면", "url", 1L
+                "짜장면", 7000, 100, "맛있는 짜장면", "url", category.getId()
         );
 
         // when & then
@@ -75,12 +87,12 @@ class ProductControllerIntegrationTest {
                 .quantity(100)
                 .description("맛있는 짜장면")
                 .imageUrl("url")
-                .category(Category.builder().name("메인").build())
+                .category(category)
                 .build();
         productRepository.save(product);
 
         ProductUpdateRequest request = new ProductUpdateRequest(
-                "쟁반짜장", 8000, 50, "더 맛있는 짜장", "new_url", 1L
+                "쟁반짜장", 8000, 50, "더 맛있는 짜장", "new_url", category.getId()
         );
 
         // when & then
@@ -102,7 +114,7 @@ class ProductControllerIntegrationTest {
                 .quantity(100)
                 .description("맛있는 짜장면")
                 .imageUrl("url")
-                .category(Category.builder().name("메인").build())
+                .category(category)
                 .build();
         productRepository.save(product);
 
@@ -122,7 +134,7 @@ class ProductControllerIntegrationTest {
                 .quantity(100)
                 .description("맛있는 짜장면")
                 .imageUrl("url")
-                .category(Category.builder().name("메인").build())
+                .category(category)
                 .build();
         productRepository.save(product);
 
@@ -139,20 +151,20 @@ class ProductControllerIntegrationTest {
     @DisplayName("판매 중인 상품 목록을 조회한다. (페이징)")
     void getActiveList() throws Exception {
         // given
-        Product product1 = Product.builder().name("짜장면").price(7000).quantity(100).description("맛있는 짜장면").imageUrl("url").category(Category.builder().name("메인").build()).build();
-        Product product2 = Product.builder().name("짬뽕").price(8000).quantity(100).description("맛있는 짬뽕").imageUrl("url").category(Category.builder().name("메인").build()).build();
+        Product product1 = Product.builder().name("짜장면").price(7000).quantity(100).description("맛있는 짜장면").imageUrl("url").category(category).build();
+        Product product2 = Product.builder().name("짬뽕").price(8000).quantity(100).description("맛있는 짬뽕").imageUrl("url").category(category).build();
         productRepository.saveAll(java.util.List.of(product1, product2));
 
         // when & then
-        mockMvc.perform(get("/api/v1/products/")
+        mockMvc.perform(get("/api/v1/products/list")
                         .param("page", "0")
                         .param("size", "10"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content.length()").value(2))
-                .andExpect(jsonPath("$.content[0].name").value("짬뽕"))
-                .andExpect(jsonPath("$.content[1].name").value("짜장면"))
+                .andExpect(jsonPath("$.content[0].name").value("짜장면"))
+                .andExpect(jsonPath("$.content[1].name").value("짬뽕"))
                 .andExpect(jsonPath("$.totalElements").value(2));
     }
 }

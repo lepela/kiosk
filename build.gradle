@@ -2,7 +2,16 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.10'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
 }
+jacoco {
+    toolVersion = "0.8.11"
+}
+test {
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport  // 테스트 후 자동으로 리포트 생성
+}
+
 group = 'dev.lepelaka'
 version = '0.0.1-SNAPSHOT'
 description = 'kiosk'
@@ -54,6 +63,50 @@ dependencies {
     testImplementation "org.testcontainers:mysql"
 
 }
+jacocoTestReport {
+    dependsOn test
+
+    reports {
+        xml.required = true   // SonarQube 연동용
+        html.required = true  // 사람이 보는 리포트
+        csv.required = false
+    }
+
+    // 커버리지 측정 제외 대상
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    '**/dto/**',
+                    '**/entity/**',
+                    '**/config/**',
+                    '**/KioskApplication.class'
+            ])
+        }))
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.70  // 전체 라인 커버리지 70% 미달시 빌드 실패
+            }
+        }
+
+        rule {
+            element = 'CLASS'
+            includes = ['**/service/**']
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.80  // 서비스 레이어 80% 이상
+            }
+        }
+    }
+}
+
+// check 태스크에 커버리지 검증 포함
+check.dependsOn jacocoTestCoverageVerification
 
 tasks.named('test') {
     useJUnitPlatform()

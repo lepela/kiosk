@@ -3,6 +3,8 @@ package dev.lepelaka.kiosk.domain.product.dto;
 import dev.lepelaka.kiosk.domain.category.dto.CategoryResponse;
 import dev.lepelaka.kiosk.domain.product.entity.Product;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Getter;
+
 
 @Schema(description = "상품 응답 DTO")
 public record ProductResponse (

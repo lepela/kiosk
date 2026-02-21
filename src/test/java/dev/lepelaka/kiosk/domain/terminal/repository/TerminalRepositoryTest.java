@@ -39,9 +39,10 @@ class TerminalRepositoryTest {
     @DisplayName("상태별 키오스크 조회")
     void findByStatus() {
         // given
-        Terminal terminal1 = createTerminal("매장1-1호기", TerminalStatus.ACTIVE);
-        Terminal terminal2 = createTerminal("매장1-2호기", TerminalStatus.ACTIVE);
-        Terminal terminal3 = createTerminal("매장1-3호기", TerminalStatus.MAINTENANCE);
+        Terminal terminal1 = createTerminal("매장1-1호기");
+        Terminal terminal2 = createTerminal("매장1-2호기");
+        Terminal terminal3 = createTerminal("매장1-3호기");
+        terminal3.maintenance();
 
         terminalRepository.saveAll(List.of(terminal1, terminal2, terminal3));
 
@@ -59,7 +60,7 @@ class TerminalRepositoryTest {
     @DisplayName("위치로 키오스크 조회")
     void findByLocation() {
         // given
-        Terminal terminal = createTerminal("매장1-1호기", TerminalStatus.ACTIVE);
+        Terminal terminal = createTerminal("매장1-1호기");
         terminalRepository.save(terminal);
 
         // when
@@ -74,8 +75,8 @@ class TerminalRepositoryTest {
     @DisplayName("활성 + 상태별 조회")
     void findByStatusAndActiveTrue() {
         // given
-        Terminal terminal1 = createTerminal("매장1-1호기", TerminalStatus.ACTIVE);
-        Terminal terminal2 = createTerminal("매장1-2호기", TerminalStatus.ACTIVE);
+        Terminal terminal1 = createTerminal("매장1-1호기");
+        Terminal terminal2 = createTerminal("매장1-2호기");
 
         terminalRepository.saveAll(List.of(terminal1, terminal2));
 
@@ -88,7 +89,7 @@ class TerminalRepositoryTest {
     }
 
     // 헬퍼 메서드
-    private Terminal createTerminal(String name, TerminalStatus status) {
+    private Terminal createTerminal(String name) {
         return Terminal.builder()
                 .name(name)
                 .build();

@@ -1,7 +1,9 @@
 package dev.lepelaka.kiosk.domain.category.exception;
 
-import dev.lepelaka.kiosk.global.exception.ErrorCode;
 
+import lombok.Getter;
+
+@Getter
 public class CategoryNotFoundException extends CategoryException{
     private Long id;
     public CategoryNotFoundException(Long categoryId) {

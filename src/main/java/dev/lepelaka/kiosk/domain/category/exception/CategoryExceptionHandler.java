@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class CategoryExceptionHandler {
     @ExceptionHandler(CategoryException.class)
     public ResponseEntity<ErrorResponse> handleCategoryException(CategoryException ex) {
-        log.warn("Order exception : {}", ex.getMessage());
+        log.warn("Category exception : {}", ex.getMessage());
 
         ErrorResponse response = ErrorResponse.of(ex.getErrorCode());
 

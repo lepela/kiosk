@@ -3,10 +3,12 @@ package dev.lepelaka.kiosk.domain.order.dto;
 import dev.lepelaka.kiosk.domain.order.entity.Order;
 import dev.lepelaka.kiosk.domain.order.entity.enums.OrderStatus;
 import lombok.Builder;
+import lombok.Getter;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Getter
 @Builder
 public class OrderResponse {
     private Long id;
