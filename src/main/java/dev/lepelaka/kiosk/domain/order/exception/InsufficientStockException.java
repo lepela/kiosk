@@ -20,7 +20,7 @@ public class InsufficientStockException extends OrderException {
 
     @Override
     public String getMessage() {
-        return String.format("%s (상품 ID : %d, 요청 : %d, 재고 : %d", super.getMessage(), productId, requested, available);
+        return String.format("%s (상품 ID : %d, 요청 : %d, 재고 : %d)", super.getMessage(), productId, requested, available);
     }
 
     @Override

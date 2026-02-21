@@ -2,7 +2,7 @@ package dev.lepelaka.kiosk.domain.product.exception;
 
 import dev.lepelaka.kiosk.global.exception.ErrorCode;
 
-public class InvalidQuantityException extends ProdcutException {
+public class InvalidQuantityException extends ProductException {
     private final Long id;
     private final int quantity;
 

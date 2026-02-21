@@ -2,7 +2,7 @@ package dev.lepelaka.kiosk.domain.product.exception;
 
 import dev.lepelaka.kiosk.global.exception.ErrorCode;
 
-public class InactiveProductException extends ProdcutException {
+public class InactiveProductException extends ProductException {
     private final Long productId;
 
     public InactiveProductException(Long productId) {

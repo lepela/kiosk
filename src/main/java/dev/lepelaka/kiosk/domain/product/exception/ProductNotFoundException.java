@@ -4,7 +4,7 @@ import dev.lepelaka.kiosk.global.exception.ErrorCode;
 
 import java.util.Collection;
 
-public class ProductNotFoundException extends ProdcutException {
+public class ProductNotFoundException extends ProductException {
     public ProductNotFoundException(Long productId) {
         super(ErrorCode.PRODUCT_NOT_FOUND);
     }

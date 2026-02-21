@@ -2,7 +2,7 @@ package dev.lepelaka.kiosk.domain.product.exception;
 
 import dev.lepelaka.kiosk.global.exception.ErrorCode;
 
-public class DuplicateProductException extends ProdcutException {
+public class DuplicateProductException extends ProductException {
     private final String productName;
 
     public DuplicateProductException(String productName) {

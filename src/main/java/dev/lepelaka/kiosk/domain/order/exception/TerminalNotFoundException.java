@@ -12,6 +12,6 @@ public class TerminalNotFoundException extends OrderException {
 
     @Override
     public String getMessage() {
-        return String.format("%s (터미널 ID : %d", super.getMessage(), terminalId);
+        return String.format("%s (터미널 ID : %d)", super.getMessage(), terminalId);
     }
 }

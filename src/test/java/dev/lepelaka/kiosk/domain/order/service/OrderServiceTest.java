@@ -9,6 +9,7 @@ import dev.lepelaka.kiosk.domain.order.entity.Order;
 import dev.lepelaka.kiosk.domain.order.entity.OrderItem;
 import dev.lepelaka.kiosk.domain.order.entity.enums.OrderStatus;
 import dev.lepelaka.kiosk.domain.order.exception.InsufficientStockException;
+import dev.lepelaka.kiosk.domain.order.exception.OrderNotFoundException;
 import dev.lepelaka.kiosk.domain.order.repository.OrderRepository;
 import dev.lepelaka.kiosk.domain.product.entity.Product;
 import dev.lepelaka.kiosk.domain.product.exception.ProductNotFoundException;
@@ -188,5 +189,14 @@ class OrderServiceTest {
         
         // 2. 주문 취소 처리 호출 검증
         verify(order, times(1)).cancel();
+    }
+
+    // NPE 테스트
+    @Test
+    void getOrderWithNullOrder() {
+        // given
+//        Long orderId = null;
+        String name = null;
+        assertThatThrownBy(() -> orderService.getOrder(name)).isInstanceOf(OrderNotFoundException.class);
     }
 }
