@@ -135,9 +135,17 @@ public class OrderService {
             throw new CannotCancelOrderException(orderId, order.getStatus());
         }
 
+        // 상품 조회 (Lock)
+        List<Long> productIds = order.getOrderItems().stream()
+                .map(OrderItem::getProductId)
+                .collect(Collectors.toList());
+
+        List<Product> products = productRepository.findAllByIdWithPessimisticLock(productIds);
+
         // 재고 복구
         for(OrderItem orderItem : order.getOrderItems()) {
-            Product product = productRepository.findById(orderItem.getProductId()).orElseThrow(() -> new ProductNotFoundException(orderItem.getProductId()));
+            Product product = products.stream().filter(p -> p.getId().equals(orderItem.getProductId())).findFirst().orElseThrow(() -> new ProductNotFoundException(orderItem.getProductId()));
+//            Product product = productRepository.findById(orderItem.getProductId()).orElseThrow(() -> new ProductNotFoundException(orderItem.getProductId()));
             product.restore(orderItem.getQuantity());
         }
         order.cancel();

@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -104,5 +105,96 @@ class OrderServiceConcurrencyTest {
         // then
         Product updatedProduct = productRepository.findById(product.getId()).orElseThrow();
         assertThat(updatedProduct.getQuantity()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("주문 취소 동시 실행 시 재고 정합성 보장.")
+    void cancelOrderConcurrentShouldMaintainStockConsistency() throws Exception {
+        // given
+        int orderCount = 100;
+        AtomicInteger orderSeq = new AtomicInteger(0);
+        given(orderNumberGenerator.generate()).willAnswer(invocation -> "ORD-CANCEL-" + System.nanoTime() + "-" + orderSeq.incrementAndGet());
+
+        // 100개의 주문을 미리 생성하여 재고를 0으로 만듦
+        List<Long> orderIds = new ArrayList<>();
+        OrderCreateRequest request = new OrderCreateRequest(List.of(new OrderItemRequest(product.getId(), 1)), terminal.getId());
+
+        for (int i = 0; i < orderCount; i++) {
+            orderIds.add(orderService.createOrder(request));
+        }
+
+        // 재고 확인 (0이어야 함)
+        assertThat(productRepository.findById(product.getId()).orElseThrow().getQuantity()).isEqualTo(0);
+
+        ExecutorService executorService = Executors.newFixedThreadPool(32);
+        CountDownLatch latch = new CountDownLatch(orderCount);
+
+        // when
+        for (Long orderId : orderIds) {
+            executorService.submit(() -> {
+                try {
+                    orderService.cancelOrder(orderId);
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+
+        // then
+        // 모든 주문이 취소되었으므로 재고는 다시 100으로 복구되어야 함
+        Product updatedProduct = productRepository.findById(product.getId()).orElseThrow();
+        assertThat(updatedProduct.getQuantity()).isEqualTo(100);
+    }
+
+    @Test
+    @DisplayName("주문 취소와 새 주문 생성 동시 실행 시 정합성 보장.")
+    void cancelAndCreateConcurrentShouldMaintainStockConsistency() throws Exception {
+        // given
+        int count = 50; // 50개 생성 vs 50개 취소
+        AtomicInteger orderSeq = new AtomicInteger(0);
+        given(orderNumberGenerator.generate()).willAnswer(invocation -> "ORD-MIX-" + System.nanoTime() + "-" + orderSeq.incrementAndGet());
+
+        // 50개의 주문을 미리 생성 (재고 100 -> 50)
+        List<Long> ordersToCancel = new ArrayList<>();
+        OrderCreateRequest createRequest = new OrderCreateRequest(List.of(new OrderItemRequest(product.getId(), 1)), terminal.getId());
+
+        for (int i = 0; i < count; i++) {
+            ordersToCancel.add(orderService.createOrder(createRequest));
+        }
+
+        ExecutorService executorService = Executors.newFixedThreadPool(32);
+        CountDownLatch latch = new CountDownLatch(count * 2); // 생성 50 + 취소 50
+
+        // when
+        // 1. 새 주문 생성 스레드 50개 (재고 감소)
+        for (int i = 0; i < count; i++) {
+            executorService.submit(() -> {
+                try {
+                    orderService.createOrder(createRequest);
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        // 2. 기존 주문 취소 스레드 50개 (재고 증가)
+        for (Long orderId : ordersToCancel) {
+            executorService.submit(() -> {
+                try {
+                    orderService.cancelOrder(orderId);
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+
+        // then
+        // 초기(100) - 미리생성(50) - 추가생성(50) + 취소(50) = 50
+        Product updatedProduct = productRepository.findById(product.getId()).orElseThrow();
+        assertThat(updatedProduct.getQuantity()).isEqualTo(50);
     }
 }
