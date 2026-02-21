@@ -2,9 +2,10 @@ package dev.lepelaka.kiosk.global.exception;
 
 import dev.lepelaka.kiosk.domain.category.exception.CategoryException;
 import dev.lepelaka.kiosk.domain.order.exception.OrderException;
-import dev.lepelaka.kiosk.domain.product.exception.ProdcutException;
+import dev.lepelaka.kiosk.domain.product.exception.ProductException;
 import dev.lepelaka.kiosk.domain.terminal.exception.TerminalException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -13,14 +14,16 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(ProdcutException.class)
-    public ResponseEntity<ErrorResponse> handleProductException(ProdcutException ex) {
+    @ExceptionHandler(ProductException.class)
+    public ResponseEntity<ErrorResponse> handleProductException(ProductException ex) {
         log.warn("Product exception [{}] : {}", ex.getErrorCode().getCode(), ex.getMessage());
         return buildResponse(ex);
     }
@@ -51,22 +54,30 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException ex) {
-        log.warn("Validation error : {}", ex.getMessage());
 
-        Map<String, Object> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach(error -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
+        Map<String, List<String>> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
+                .collect(Collectors.groupingBy(
+                        FieldError::getField,
+                        Collectors.mapping(DefaultMessageSourceResolvable::getDefaultMessage, Collectors.toList())
+                ));
 
+        List<String> globalErrors = ex.getBindingResult().getGlobalErrors().stream()
+                .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                .toList();
+
+        Map<String, Object> errors = new HashMap<>(fieldErrors);
+        if (!globalErrors.isEmpty()) {
+            errors.put("_global", globalErrors);
+        }
         ErrorResponse response = ErrorResponse.builder()
                 .code("VALIDATION_FAILED")
                 .message("입력값 검증에 실패했습니다.")
                 .details(errors)
                 .build();
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+
+        return ResponseEntity.badRequest().body(response);
     }
+
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception ex) {
