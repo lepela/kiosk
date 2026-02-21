@@ -91,7 +91,6 @@ public class Product extends BaseEntity {
     }
 
     public void restore(int requestedQuantity) {
-        validateActive();
         increaseQuantity(requestedQuantity);
     }
 
