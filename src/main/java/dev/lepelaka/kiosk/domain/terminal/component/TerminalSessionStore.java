@@ -1,7 +1,7 @@
 package dev.lepelaka.kiosk.domain.terminal.component;
 
-import dev.lepelaka.kiosk.domain.terminal.exception.TerminalErrorCode;
 import dev.lepelaka.kiosk.global.exception.BusinessException;
+import dev.lepelaka.kiosk.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
